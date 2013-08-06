@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/lcy">
+        <file>image/converter.png</file>
+        <file>image/MediaWnd.png</file>
+        <file>image/previewMute.png</file>
+        <file>image/previewPause.png</file>
+        <file>image/previewPlay.png</file>
+        <file>image/previewSnapshot.png</file>
+        <file>image/previewSound.png</file>
+        <file>image/previewStop.png</file>
+        <file>image/previewVolFore.png</file>
+        <file>image/VolBack.png</file>
+        <file>image/VolFore.png</file>
+        <file>image/volume_slider.png</file>
+        <file>image/previewVolBack.png</file>
+        <file>image/ago.png</file>
+        <file>image/ago_s.png</file>
+        <file>image/bg.png</file>
+        <file>image/bg_s.png</file>
+        <file>image/conversion.png</file>
+        <file>image/checkbox.PNG</file>
+        <file>image/film.png</file>
+        <file>image/time.png</file>
+        <file>image/voice.png</file>
+        <file>image/no.png</file>
+        <file>image/video+.png</file>
+    </qresource>
+</RCC>
