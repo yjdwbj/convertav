@@ -14,6 +14,8 @@ const QString img_previewSound (":/lcy/image/previewSound.png");
 
 
 
+
+
 PreViewPlay::PreViewPlay(QWidget *parent)
     :QWidget(parent),
       main_gbox(new QGroupBox(this)),
@@ -46,13 +48,13 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 //    btn_play->setObjectName("btn_play");
     btn_play->setEnabled(false);
     setDefaultStyleSheet(btn_play,img_previewPlay,tr("top"));
-    connect(btn_play,SIGNAL(clicked()),SLOT(slot_Play_Clicked()));
+    connect(btn_play,SIGNAL(pressed()),SLOT(slot_Play_Clicked()));
 
     btn_stop = new QPushButton(sub_gbox);
 //    btn_stop->setObjectName("btn_stop");
     setDefaultStyleSheet(btn_stop,img_previewStop,tr("bottom"));
     btn_stop->setEnabled(false);
-    connect(btn_stop,SIGNAL(clicked()),SLOT(slot_Stop_Clicked()));
+    connect(btn_stop,SIGNAL(pressed()),SLOT(slot_Stop_Clicked()));
 
     QPushButton *btn_mute = new QPushButton(sub_gbox);
     btn_mute->setObjectName("btn_mute");
@@ -95,9 +97,18 @@ PreViewPlay::~PreViewPlay()
 void PreViewPlay::PrePlayFile(const QString &player,const QString &fname)
 {
     QStringList arg;
-    arg << "-slave" << "-wid" << QString::number(lab_preplay->winId()) << "-quiet" << "-vo" << "directx"
+    arg << "-slave" << "-wid" << QString::number(lab_preplay->winId()) << "-quiet"  << "-vo" << "directx"
         << "-msglevel" << "identify=2"
-        << "-loop" << "0" << fname;
+        << "-loop" << "-1" << fname;
+    m_LastPlay.first = player;
+    if(!fname.compare(m_LastPlay.second)
+            && (m_PrePlayProcess->state() == QProcess::Running))
+    {
+        return;
+    }
+    m_LastPlay.second = fname;
+    m_PrePlayProcess->kill();
+    while(m_PrePlayProcess->waitForFinished());
     m_PrePlayProcess->start(player,arg);
     connect(m_PrePlayProcess,SIGNAL(readyReadStandardOutput()),SLOT(slot_Mplay_recevie()));
     btn_play->setEnabled(true);
@@ -148,22 +159,29 @@ void PreViewPlay::slot_Play_Clicked()
          btn_play->setStyleSheet( playstyle);
          setDefaultStyleSheet(btn_stop,img_previewStop,"bottom");
          btn_stop->setEnabled(false);
-//         setDefaultStyleSheet(this->findChild<QPushButton*>("btn_stop"),img_previewStop,tr("top"));
+         if(!m_PrePlayProcess->state())
+         {
+           PrePlayFile(m_LastPlay.first,m_LastPlay.second);
+           return;
+         }
      }
 
-//    switch_Button_state(this->findChild<QPushButton*>("btn_play"),img_previewPlay,img_previewPause);
+
+//    if(m_PrePlayProcess)
+        m_PrePlayProcess->write("pause\n");
+
 }
 
 void PreViewPlay::slot_Stop_Clicked()
 {
 
-    QString style = btn_stop->styleSheet();
+//    QString style = btn_stop->styleSheet();
     const QString playstyle = "background-image: url("+img_previewStop+");\
                                  background-position: top center;margin: -2px -2px -2px -2px;";
     const QString stopstyle = "background-image: url("+img_previewStop+");\
                                  background-position: bottom center;margin: -2px -2px -2px -2px;";
 
-    if(!style.compare(playstyle))
+    if(btn_stop->isEnabled())
     {
         btn_stop->setStyleSheet(stopstyle);
         setDefaultStyleSheet(btn_play,img_previewPlay,tr("top"));
@@ -194,11 +212,19 @@ void PreViewPlay::slot_Mute_Clicked()
      {
          w->setStyleSheet(sound);
          sld->setValue(sld->maximum()/2);
+         if(m_PrePlayProcess)
+         {
+             m_PrePlayProcess->write("mute 0\n");
+         }
      }
      else
      {
          w->setStyleSheet(mute);
          sld->setValue(sld->minimum());
+         if(m_PrePlayProcess)
+         {
+             m_PrePlayProcess->write("mute 1\n");
+         }
      }
 }
 

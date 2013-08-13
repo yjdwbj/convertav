@@ -1,0 +1,30 @@
+QPushButton ,QGroupBox {font: bold 14px;}
+
+QPushButton#btn_save:hover, QPushButton#btn_cancel:hover {
+background-image: url(:/lcy/image/large_button.png);
+background: #d4d4d4;
+border-radius: 10px;
+background-origin: margin;
+border-width: 2px;
+background-position: buttom center;
+border-style: outset;
+font-family: "SimHei";
+color: white;
+font: bold 20px;
+border-color: beige;
+margin-top: 10px;
+}
+
+QPushButton#btn_save, QPushButton#btn_cancel {
+background-image: url(:/lcy/image/large_button.png);
+border-radius: 10px;
+background-origin: margin;
+border-width: 2px;
+background-position: top center;
+border-style: outset;
+font-family: "SimHei";
+font: bold 20px;
+color: white;
+border-color: beige;
+margin-top: 10px;
+}

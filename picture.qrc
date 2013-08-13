@@ -24,5 +24,22 @@
         <file>image/voice.png</file>
         <file>image/no.png</file>
         <file>image/video+.png</file>
+        <file>image/button_add.png</file>
+        <file>image/large_button.png</file>
+        <file>image/systemsetting.qss</file>
+        <file>image/button-stop.png</file>
+        <file>image/progress_bk.png</file>
+        <file>image/progress_fg.png</file>
+        <file>image/progresspause.png</file>
+        <file>image/audio_settings.png</file>
+        <file>image/basic_settings.png</file>
+        <file>image/video_settings.png</file>
+        <file>image/zbg.png</file>
+        <file>image/option.png</file>
+        <file>image/converted.png</file>
+        <file>image/convertfile-1.png</file>
+        <file>image/preset-1.png</file>
+        <file>image/stop.png</file>
+        <file>image/convertall-1.png</file>
     </qresource>
 </RCC>

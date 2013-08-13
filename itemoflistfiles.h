@@ -9,30 +9,67 @@
 #include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QTabWidget>
 #include "global.h"
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QProgressBar>
+#include <QProcess>
+#include "toolboxsettings.h"
+#include <QApplication>
+#include <QBitmap>
+
+
 
 class ItemView: public QTabWidget
 {
     Q_OBJECT
 public:
-    explicit ItemView(itemstruct &item, QWidget *parent = 0,Qt::WindowFlags flags = 0);
+    explicit ItemView(itemstruct &item,const ToolBoxSettings *tbs, QWidget *parent = 0);
     ~ItemView();
-//    QLayout *getLayout() const { return main_layout;}
-//    QTabWidget *getTabWidget() const {return tw_obj;}
+
+    QPushButton* btn_convert;
+    QPushButton* btn_delself;
+    QProcess *m_Process;
+
+public slots:
+    void slot_destoryMySelf();
+    void slot_stopConvert();
+    void slot_ConvertToStandby();
+    void slot_MouseOnConvert();
+
+private slots:
+
+    void slot_DClickToPlay();
+    void slot_ConvertFinished(int);
+    void slot_ConvertingStandardOutput();
+
 
 private:
     QGridLayout* main_layout;
-    QPushButton* btn_convert;
-    QPushButton* btn_delself;
-    QLabel *lab_audio;
-    QLabel *lab_videoinfo;
+
+//    QLabel *lab_audio;
+//    QLabel *lab_videoinfo;
     QLabel *lab_view;
-    QLabel *lab_time;
+//    QLabel *lab_time;
     QCheckBox *cbox_selelct;
 
+    QString fullpath;
+
+    itemstruct m_item;
+    const ToolBoxSettings *m_ToolBoxSettings;
+    QString m_mencoder;
+
+
     void setDefaultStyleSheet(QWidget *w, const QString &image);
-private slots:
-    void slot_MouseOnConvert();
-    void slot_DClickToPlay();
+    QLayout* CreateItemInfoLayout();
+    void removeItemLayout();
+
+
+Q_SIGNALS:
+    void parentDeleteMe(QWidget *);
+    void parentConvertSignal();
+
+
+
+
 
 
 

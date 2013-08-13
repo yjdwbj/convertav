@@ -7,7 +7,28 @@ typedef struct {
     QString  audio_info;
     QString  file_time;
     QString  image;
+    QString  fullpath;
+    QString  outputFullPath;
+    bool isConverted;
+    bool isStandby;
 } itemstruct;
 
+
+typedef struct {
+    QString OutputDir;
+    bool AutoOpen;
+    QString Height;
+    QString Width;
+    QString VEncoder;
+    QString HWRatio;
+    QString VBitRate;
+    QString EncoderCount;
+    QString Frame;
+    QString AEncoder;
+    QString ABitRate;
+    QString Channel;
+    QString SampleRate;
+
+} ConvertCfg;
 
 #endif // GLOBAL_H
