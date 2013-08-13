@@ -29,6 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
 //    m_mplayer = m_AppPath + ("/mplayer.exe");
 //    m_mencoder = m_AppPath +("/mencoder.exe");
 
+    m_configfile = QDir::homePath()+"/Application Data/ConvertToMJPEG/convert_to_mjeg.ini";
+    if(!QFileInfo(m_configfile).exists())
+    {
+        QDir(QDir::root()).mkpath(QFileInfo(m_configfile).absolutePath());
+    }
     if(!QFileInfo(m_mplayer).exists())
     {
         FilesOrDirNoExists(m_mplayer);
@@ -100,7 +105,7 @@ void MainWindow::ReadOrCreateCfg()
 void MainWindow::slot_openfiles()
 {
 
-    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),"D:/testing-Video",tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv)"));
+    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),"D:/testing-Video",tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv *.wmv *.mov)"));
 
     if(listfiles.isEmpty())
         return ;
@@ -239,9 +244,7 @@ void MainWindow::slot_ConvertAll()
     {
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
         iw->slot_MouseOnConvert();
-        while(iw->m_Process->waitForFinished(2000))
-            QCoreApplication::processEvents();
-
+        while(iw->m_Process->waitForFinished(1000));
     }
     SystemSettings *s = new SystemSettings;
     if(s->isConvertFinishedAutoOpen())
@@ -262,6 +265,10 @@ void MainWindow::slot_Settings()
     if(s->exec())
     {
         m_ToolBoxSettings->updateToolBox(s->getCurrentIndexText());
+        if(!QFileInfo(m_configfile).exists())
+        {
+            s->writeCfgToFile(m_configfile);
+        }
     }
 
 }

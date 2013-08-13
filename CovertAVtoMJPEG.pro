@@ -27,6 +27,9 @@ HEADERS  += mainwindow.h \
     global.h
 
 FORMS    += mainwindow.ui
-
+RC_FILE += icon.rc
 RESOURCES += \
     picture.qrc
+
+OTHER_FILES += \
+    icon.rc

@@ -12,12 +12,14 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QLabel>
+#include <QMessageBox>
 #include <QFileDialog>
 #include <QDesktopServices>
 #include <QDir>
 #include <QSize>
 #include <QUrl>
 #include "global.h"
+#include <QTextStream>
 
 
 class SystemSettings: public QDialog
@@ -32,6 +34,7 @@ public:
     QStringList getlistAllItems() {return m_listAllItems;}
     QStringList getCurrentIndexText();
     QString getOutputDir() const {return edt_dir->text();}
+    void writeCfgToFile(const QString &fname);
     bool isConvertFinishedAutoOpen() const {return cbox_autoopen->isChecked();}
     QPair<QString,QString> getFilmHW() const { return qMakePair(edt_height->text(),edt_width->text());}
 public slots:
@@ -68,6 +71,7 @@ private:
 
     void setDefaultCfg();
     void InitDialog();
+    void FilesOrDirNoExists(const QString &in);
 
 };
 

@@ -10,6 +10,9 @@ const QStringList EncoderCount(QStringList() << "1" << "2");
 const QStringList SampleRate(QStringList() << "8000" << "22050" << "24000" << "32000" << "44100" << "48000");
 const QStringList Channel(QStringList() << "1" << "2");
 
+const QStringList m_listkey(QStringList() << "Height=" << "Width=" << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
+          << "VEncoder=" << "ABitrate=" << "AEncoder=" << "Channel=" << "Samplerate=");
+
 
 
 SystemSettings::SystemSettings(QWidget *parent)
@@ -34,7 +37,10 @@ SystemSettings::SystemSettings(QWidget *parent)
     edt_dir->setFixedWidth(400);
     edt_dir->setEnabled(false);
     setOutputDir(QDir::homePath()+"/My Documents/ConvertToMJPEG");
-
+    if(!QFileInfo(getOutputDir()).exists())
+    {
+        QDir(QDir::root()).mkdir(getOutputDir());
+    }
     QPushButton* btn_browser = new QPushButton("浏览目录",box_output);
     connect(btn_browser,SIGNAL(clicked()),SLOT(slot_setNewOutputDir()));
 
@@ -156,6 +162,11 @@ SystemSettings::SystemSettings(QWidget *parent)
 }
 
 
+void SystemSettings::FilesOrDirNoExists(const QString &in)
+{
+    QMessageBox::warning(this,"出错啦!","找不到这个文件："+in);
+}
+
 void SystemSettings::slot_openOutputDir()
 {
      QDesktopServices::openUrl(QUrl(tr("file:///")+edt_dir->text()));
@@ -194,6 +205,34 @@ QStringList SystemSettings::getCurrentIndexText()
     <<   cbbox_channel->currentText() << cbbox_samplerate->currentText();
     return m_currentIndexText;
 
+
+
+}
+
+void SystemSettings::writeCfgToFile(const QString &fname)
+{
+    QFile fd(fname);
+
+    if(!fd.open(QIODevice::WriteOnly|QIODevice::Text))
+    {
+        QMessageBox::warning(this,"出错啦!","不能创建文件："+fname);
+        return;
+    }
+
+    QTextStream stream(&fd);
+     stream.setAutoDetectUnicode(false);
+     stream.setGenerateByteOrderMark(true);
+     stream.setCodec("UTF-8");
+
+     stream << "Output=" << edt_dir->text() << "\r\n";
+     QString tmp = cbox_autoopen->isChecked() ? "1" : "0";
+     stream << "AutoOpen=" << tmp << "\r\n";
+     for(int i = 0 ; i < m_listkey.count();i++)
+     {
+         stream << m_listkey.at(i) << m_currentIndexText.at(i) << "\r\n";
+     }
+
+     fd.close();
 }
 
 SystemSettings::~SystemSettings()

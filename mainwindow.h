@@ -45,6 +45,7 @@ private:
     PreViewPlay *m_PreViewPlay;
     QProcess *m_PrePlayProcess;
     ToolBoxSettings *m_ToolBoxSettings;
+    QString m_configfile;
     QString m_AppPath;
     QString m_mplayer;
     QString m_mencoder;

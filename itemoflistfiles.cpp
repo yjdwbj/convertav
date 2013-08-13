@@ -157,7 +157,7 @@ void ItemView::slot_MouseOnConvert()
         << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
         << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
     m_Process->start(m_mencoder,arg);
-    while(m_Process->waitForFinished(2000))
+    while(m_Process->waitForFinished(1000))
          QCoreApplication::processEvents();
 
 }
@@ -198,6 +198,9 @@ void ItemView::slot_ConvertToStandby()
     m_item.isStandby = true;
 }
 
+
+
+
 void ItemView::slot_ConvertFinished(int)
 {
     slot_stopConvert();
@@ -211,6 +214,7 @@ void ItemView::slot_ConvertFinished(int)
 //    lab_view->setWindowFlags(Qt::FramelessWindowHint);
     lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
     removeItemLayout();
+    m_Process->deleteLater();
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
 
 
@@ -218,6 +222,8 @@ void ItemView::slot_ConvertFinished(int)
 
 void ItemView::slot_stopConvert()
 {
+    m_Process->kill();
+    m_Process->deleteLater();
     removeItemLayout();
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
 }

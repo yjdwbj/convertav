@@ -41,5 +41,6 @@
         <file>image/preset-1.png</file>
         <file>image/stop.png</file>
         <file>image/convertall-1.png</file>
+        <file>image/logo.ico</file>
     </qresource>
 </RCC>
