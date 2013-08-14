@@ -8,6 +8,7 @@
 #include "systemsettings.h"
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QPalette>
 
 
 
@@ -28,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //    m_AppPath = qApp->applicationDirPath();
 //    m_mplayer = m_AppPath + ("/mplayer.exe");
 //    m_mencoder = m_AppPath +("/mencoder.exe");
+
+    this->setWindowFlags(Qt::WindowMinimizeButtonHint|
+                         Qt::WindowCloseButtonHint);
 
     m_configfile = QDir::homePath()+"/Application Data/ConvertToMJPEG/convert_to_mjeg.ini";
     if(!QFileInfo(m_configfile).exists())
@@ -61,8 +65,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(btn_ConvertAll,SIGNAL(clicked()),SLOT(slot_ConvertAll()));
 
 
-    btn_OpenFile->setFixedSize(112,28);
+    btn_OpenFile->setFixedSize(112,26);
     btn_OpenFile->setIconSize(btn_OpenFile->size());
+    QPalette palette;
+    palette.setBrush(QPalette::Active,QPalette::Button,QBrush(QPixmap(":/lcy/image/video+.png").copy(0,0,112,26)));
+    btn_OpenFile->setPalette(palette);
 
     connect(btn_OpenFile,SIGNAL(clicked()),SLOT(slot_openfiles()));
     layout_main->addWidget(btn_OpenFile,0,0);
@@ -221,14 +228,17 @@ void MainWindow::slot_removeItem(QWidget *p)
 
 void MainWindow::slot_DClickToPrePlay(QModelIndex mindex)
 {
+    QListWidgetItem *p = lwt_ConverFiles->item(mindex.row());
+    ItemView  *iv= (ItemView*)lwt_ConverFiles->itemWidget(p);
+   QLineEdit *le = iv->findChild<QLineEdit*>("ReName");
+   if(le)
+   {
+       iv->slot_CancelReNameFile();
+       return;
+   }
    m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[mindex.row()]);
 }
 
-
-void MainWindow::slot_DClickToPrePlay(QListWidgetItem *p)
-{
-    m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[lwt_ConverFiles->row(p)]);
-}
 
 void MainWindow::slot_ConvertAll()
 {
@@ -262,14 +272,17 @@ void MainWindow::slot_Settings()
         return;
     s->setStyleSheet(qss.readAll());
     qss.close();
+    if(!QFileInfo(m_configfile).exists())
+        s->writeCfgToFile(m_configfile);
+    else
+        s->readCfgToFile(m_configfile);
     if(s->exec())
     {
+        s->UpdateCurrentIndexText();
         m_ToolBoxSettings->updateToolBox(s->getCurrentIndexText());
-        if(!QFileInfo(m_configfile).exists())
-        {
-            s->writeCfgToFile(m_configfile);
-        }
+        s->writeCfgToFile(m_configfile);
     }
+
 
 }
 

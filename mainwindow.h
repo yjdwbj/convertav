@@ -29,7 +29,6 @@ public:
 private slots:
     void slot_openfiles();
     void slot_DClickToPrePlay(QModelIndex);
-    void slot_DClickToPrePlay(QListWidgetItem*);
     void slot_ConvertAll();
     void slot_Settings();
     void slot_removeItem(QWidget *);

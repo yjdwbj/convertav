@@ -27,6 +27,7 @@ public:
 
     QPushButton* btn_convert;
     QPushButton* btn_delself;
+
     QProcess *m_Process;
 
 public slots:
@@ -34,12 +35,17 @@ public slots:
     void slot_stopConvert();
     void slot_ConvertToStandby();
     void slot_MouseOnConvert();
+    void slot_CancelReNameFile();
 
 private slots:
-
+    void slot_SingleConvert();
     void slot_DClickToPlay();
     void slot_ConvertFinished(int);
     void slot_ConvertingStandardOutput();
+    void slot_ReNameFile();
+    void slot_SureReNameFile();
+
+    void slot_EditOutOfFoucs();
 
 
 private:
@@ -57,10 +63,16 @@ private:
     const ToolBoxSettings *m_ToolBoxSettings;
     QString m_mencoder;
 
+    QPushButton* btn_rename;
+    QPushButton* btn_rename_accpet;
+    QPushButton* btn_rename_reject;
+    QLineEdit*  edt_rename;
 
+    QLayout* CreateReNameLayout();
     void setDefaultStyleSheet(QWidget *w, const QString &image);
     QLayout* CreateItemInfoLayout();
-    void removeItemLayout();
+    QLayout* CreateFirstLine();
+    void removeItemLayout(QLayoutItem *p);
 
 
 Q_SIGNALS:

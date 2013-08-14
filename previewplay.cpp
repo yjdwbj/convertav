@@ -12,7 +12,8 @@ const QString img_previewPause (":/lcy/image/previewPause.png");
 const QString img_previewMute (":/lcy/image/previewMute.png");
 const QString img_previewSound (":/lcy/image/previewSound.png");
 
-
+const char *pause="pause\n";
+const char *get_percent_pos="get_percent_pos\n";
 
 
 
@@ -31,6 +32,9 @@ PreViewPlay::PreViewPlay(QWidget *parent)
     sdr_process = new QSlider(main_gbox);
 
     sdr_process->setOrientation(Qt::Horizontal);
+//    connect(sdr_process,SIGNAL(valueChanged(int)),SLOT(slot_SeekToPos(int)));
+    connect(sdr_process,SIGNAL(sliderMoved(int)),SLOT(slot_SeekToPos(int)));
+
 
     setQSliderStyle(sdr_process,img_volume_slider,img_bg,img_ago);
 
@@ -49,6 +53,13 @@ PreViewPlay::PreViewPlay(QWidget *parent)
     btn_play->setEnabled(false);
     setDefaultStyleSheet(btn_play,img_previewPlay,tr("top"));
     connect(btn_play,SIGNAL(pressed()),SLOT(slot_Play_Clicked()));
+
+
+
+    btn_pause = new QPushButton(sub_gbox);
+    btn_pause->setEnabled(false);
+    setDefaultStyleSheet(btn_pause,img_previewPause,tr("bottom"));
+    connect(btn_pause,SIGNAL(clicked()),SLOT(slot_Pause_Clicked()));
 
     btn_stop = new QPushButton(sub_gbox);
 //    btn_stop->setObjectName("btn_stop");
@@ -69,6 +80,7 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 
 
     hlayout->addWidget(btn_play);
+    hlayout->addWidget(btn_pause);
     hlayout->addWidget(btn_stop);
     hlayout->addWidget(btn_mute);
     hlayout->addWidget(sdr_volume);
@@ -88,6 +100,23 @@ PreViewPlay::PreViewPlay(QWidget *parent)
     connect(sdr_volume,SIGNAL(valueChanged(int)),SLOT(slot_QSlider_Changed(int)));
 
 }
+
+void PreViewPlay::slot_SeekToPos(int pos)
+{
+
+//    QString seek("seek "+QString::number(pos)+" 1\n");
+
+    QString seek= QString("seek %1 %2").arg(QString::number(pos)).arg(QString::number(1));
+    m_PrePlayProcess->write(seek.toLocal8Bit()+"\n");
+
+//    slot_Mplay_recevie();
+
+
+
+
+}
+
+
 
 PreViewPlay::~PreViewPlay()
 {
@@ -112,14 +141,15 @@ void PreViewPlay::PrePlayFile(const QString &player,const QString &fname)
     m_PrePlayProcess->start(player,arg);
     connect(m_PrePlayProcess,SIGNAL(readyReadStandardOutput()),SLOT(slot_Mplay_recevie()));
     btn_play->setEnabled(true);
-    setDefaultStyleSheet(btn_play,img_previewPause,tr("top"));
+//    setDefaultStyleSheet(btn_play,img_previewPause,tr("top"));
     btn_stop->setEnabled(true);
+    btn_pause->setEnabled(true);
     setDefaultStyleSheet(btn_stop,img_previewStop,tr("top"));
 }
 
 void PreViewPlay::slot_Mplay_recevie()
 {
-    m_PrePlayProcess->write("get_percent_pos\n");
+    m_PrePlayProcess->write(get_percent_pos);
     while(m_PrePlayProcess->canReadLine())
     {
         QByteArray ba = m_PrePlayProcess->readLine();
@@ -146,30 +176,33 @@ void PreViewPlay::slot_Play_Clicked()
 {
 
     QString style = btn_play->styleSheet();
-    const QString playstyle = "background-image: url("+img_previewPlay+");background-position: top center;margin: -2px -2px -2px -2px;";
-    const QString pausestyle = "background-image: url("+img_previewPause+");background-position: top center;margin: -2px -2px -2px -2px;";
-    if(!style.compare(playstyle))
-     {
-         btn_play->setStyleSheet( pausestyle);
-         setDefaultStyleSheet(btn_stop,img_previewStop,"top");
-         btn_stop->setEnabled(true);
-     }
-     else
-     {
-         btn_play->setStyleSheet( playstyle);
-         setDefaultStyleSheet(btn_stop,img_previewStop,"bottom");
-         btn_stop->setEnabled(false);
-         if(!m_PrePlayProcess->state())
-         {
-           PrePlayFile(m_LastPlay.first,m_LastPlay.second);
-           return;
-         }
-     }
+//    const QString playstyle = "background-image: url("+img_previewPlay+");background-position: top center;margin: -2px -2px -2px -2px;";
+//    const QString pausestyle = "background-image: url("+img_previewPause+");background-position: top center;margin: -2px -2px -2px -2px;";
+//    if(!style.compare(playstyle))
+//     {
+//         btn_play->setStyleSheet( pausestyle);
+//         setDefaultStyleSheet(btn_stop,img_previewStop,"top");
+//         btn_stop->setEnabled(true);
+//     }
+//     else
+//     {
+//         btn_play->setStyleSheet( playstyle);
+//         setDefaultStyleSheet(btn_stop,img_previewStop,"bottom");
+//         btn_stop->setEnabled(false);
+//         if(!m_PrePlayProcess->state())
+//         {
+//           PrePlayFile(m_LastPlay.first,m_LastPlay.second);
+//         }
+//     }
+    PrePlayFile(m_LastPlay.first,m_LastPlay.second);
 
 
-//    if(m_PrePlayProcess)
-        m_PrePlayProcess->write("pause\n");
+}
 
+void PreViewPlay::slot_Pause_Clicked()
+{
+    if(m_PrePlayProcess->state() == QProcess::Running)
+    m_PrePlayProcess->write(pause);
 }
 
 void PreViewPlay::slot_Stop_Clicked()
@@ -185,6 +218,8 @@ void PreViewPlay::slot_Stop_Clicked()
     {
         btn_stop->setStyleSheet(stopstyle);
         setDefaultStyleSheet(btn_play,img_previewPlay,tr("top"));
+        m_PrePlayProcess->write("stop\n");
+        m_PrePlayProcess->write("quit 0\n");
         if(m_PrePlayProcess)
             m_PrePlayProcess->kill();
         btn_stop->setEnabled(false);

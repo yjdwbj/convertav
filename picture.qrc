@@ -42,5 +42,9 @@
         <file>image/stop.png</file>
         <file>image/convertall-1.png</file>
         <file>image/logo.ico</file>
+        <file>image/video.ico</file>
+        <file>image/cancel.png</file>
+        <file>image/pen.png</file>
+        <file>image/sure.png</file>
     </qresource>
 </RCC>

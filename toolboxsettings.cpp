@@ -26,7 +26,7 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
     QStringList tmplist = m_sys->getlistAllItems();
     for(int i = 0 ; i < tmplist.count();i++)
     {
-        m_listComboBox[i]->addItems(tmplist[i].split('|'));
+        m_listComboBox[i]->addItems(tmplist[i].split(','));
         connect(m_listComboBox[i],SIGNAL(currentTextChanged(QString)),
                 SLOT(SomeValueHasChanged(QString)));
     }

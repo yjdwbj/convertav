@@ -26,22 +26,26 @@ private:
     QSlider *sdr_process;
 
     QPushButton* btn_play;
+    QPushButton* btn_pause;
     QPushButton* btn_stop;
     QProcess *m_PrePlayProcess;
     QPair<QString,QString> m_LastPlay;
 //    QString m_LastPlay;
+
     void setDefaultStyleSheet(QWidget *w, const QString &imgname, const QString &position);
     void setDefaultStyleSheet(QWidget *w, const QString &imgname);
     void setQSliderStyle(QWidget *w, const QString &slider, const QString &add, const QString &sub);
     void switch_Button_state(QWidget *w,const QString &one,const QString &two);
 public slots:
     void slot_Stop_Clicked();
+    void slot_Pause_Clicked();
 private slots:
     void slot_Play_Clicked();
 
     void slot_Mute_Clicked();
     void slot_QSlider_Changed(int );
     void slot_Mplay_recevie();
+    void slot_SeekToPos(int);
 
 };
 

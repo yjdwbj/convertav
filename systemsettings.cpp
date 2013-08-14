@@ -1,14 +1,14 @@
 #include "systemsettings.h"
 
-const QStringList VEncoder(QStringList() <<"mjpeg");
-const QStringList AEncoder(QStringList() << "pcm");
-const QStringList VBitRate(QStringList() << "256" << "512" << "768" << "1000" << "1200" << "1500");
-const QStringList ABitRate(QStringList() << "16" << "32" << "40" << "48" << "56" << "64" << "80" << "96" << "112" << "128" <<"160" );
-const QStringList FrameRate(QStringList() << "8" << "10" << "12" << "15" << "23.976" << "24" << "25" << "29.97" << "30");
-const QStringList HWRatio(QStringList() << "1" << "4/3" << "16/9" << "221/100");
-const QStringList EncoderCount(QStringList() << "1" << "2");
-const QStringList SampleRate(QStringList() << "8000" << "22050" << "24000" << "32000" << "44100" << "48000");
-const QStringList Channel(QStringList() << "1" << "2");
+const QString VEncoder("mjpeg");
+const QString AEncoder("pcm");
+const QString VBitRate("256,512,768,1000,1200,1500");
+const QString ABitRate("16,32,40,48,56,64,80,96,112,128,160" );
+const QString FrameRate("8,10,12,15,23.976,24,25,29.97,30");
+const QString HWRatio("1,4/3,16/9,221/100");
+const QString EncoderCount("1,2");
+const QString SampleRate("8000,22050,24000,32000,44100,48000");
+const QString Channel("1,2");
 
 const QStringList m_listkey(QStringList() << "Height=" << "Width=" << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
           << "VEncoder=" << "ABitrate=" << "AEncoder=" << "Channel=" << "Samplerate=");
@@ -25,13 +25,13 @@ SystemSettings::SystemSettings(QWidget *parent)
 {
 
 
-    m_listAllItems << EncoderCount.join('|') << FrameRate.join('|') << HWRatio.join('|')
-                   << VBitRate.join('|') << VEncoder.join('|') << ABitRate.join('|')
-                   << AEncoder.join('|') << Channel.join('|') << SampleRate.join('|');
+    m_listAllItems << EncoderCount << FrameRate << HWRatio << VBitRate << VEncoder << ABitRate
+                   << AEncoder << Channel << SampleRate;
 //    m_listComboBox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
 //                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
 //                         << cbbox_samplerate;
     this->setWindowTitle("配置");
+    this->setWindowIcon(QPixmap(":/lcy/image/option.png").copy(0,0,26,26));
     QGridLayout *output_lay = new QGridLayout(box_output);
     edt_dir = new QLineEdit(box_output);
     edt_dir->setFixedWidth(400);
@@ -133,6 +133,11 @@ SystemSettings::SystemSettings(QWidget *parent)
 
 
 
+    m_listcbbox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate << cbox_vencoder
+                  << cbbox_abitrate << cbbox_aencoder << cbbox_channel << cbbox_samplerate;
+
+
+
     main_Layout->addWidget(box_output);
     main_Layout->addWidget(box_video);
     main_Layout->addWidget(box_audio);
@@ -159,6 +164,7 @@ SystemSettings::SystemSettings(QWidget *parent)
 
 
     InitDialog();
+    readCfgToFile(QDir::homePath()+"/Application Data/ConvertToMJPEG/convert_to_mjeg.ini");
 }
 
 
@@ -185,28 +191,30 @@ void SystemSettings::InitDialog()
 
 
     setVideoSize(128,160);
-    cbox_enoderCount->addItems(EncoderCount);
-    cbox_frameRate->addItems(FrameRate);
-    cbox_hwrate->addItems(HWRatio);
-    cbox_vbitrate->addItems(VBitRate);
-    cbox_vencoder->addItems(VEncoder);
-    cbbox_abitrate->addItems(ABitRate);
-    cbbox_aencoder->addItems(AEncoder);
-    cbbox_channel->addItems(Channel);
-    cbbox_samplerate->addItems(SampleRate);
+    for(int i = 0 ; i < m_listcbbox.count();i++)
+    {
+        m_listcbbox[i]->addItems(m_listAllItems[i].split(","));
+    }
+
+//    cbox_enoderCount->addItems(EncoderCount);
+//    cbox_frameRate->addItems(FrameRate);
+//    cbox_hwrate->addItems(HWRatio);
+//    cbox_vbitrate->addItems(VBitRate);
+//    cbox_vencoder->addItems(VEncoder);
+//    cbbox_abitrate->addItems(ABitRate);
+//    cbbox_aencoder->addItems(AEncoder);
+//    cbbox_channel->addItems(Channel);
+//    cbbox_samplerate->addItems(SampleRate);
+
 }
 
-QStringList SystemSettings::getCurrentIndexText()
+void SystemSettings::UpdateCurrentIndexText()
 {
     m_currentIndexText.clear();
     m_currentIndexText << edt_height->text() << edt_width->text() << cbox_enoderCount->currentText()
     << cbox_frameRate->currentText() << cbox_hwrate->currentText() << cbox_vbitrate->currentText()
     << cbox_vencoder->currentText() << cbbox_abitrate->currentText() << cbbox_aencoder->currentText()
     <<   cbbox_channel->currentText() << cbbox_samplerate->currentText();
-    return m_currentIndexText;
-
-
-
 }
 
 void SystemSettings::writeCfgToFile(const QString &fname)
@@ -227,12 +235,51 @@ void SystemSettings::writeCfgToFile(const QString &fname)
      stream << "Output=" << edt_dir->text() << "\r\n";
      QString tmp = cbox_autoopen->isChecked() ? "1" : "0";
      stream << "AutoOpen=" << tmp << "\r\n";
+     UpdateCurrentIndexText();
      for(int i = 0 ; i < m_listkey.count();i++)
      {
          stream << m_listkey.at(i) << m_currentIndexText.at(i) << "\r\n";
      }
 
      fd.close();
+}
+
+void SystemSettings::readCfgToFile(const QString &fname)
+{
+    if(!QFileInfo(fname).exists())
+        return;
+    QFile fd(fname);
+    if(!fd.open(QIODevice::ReadOnly|QIODevice::Text))
+    {
+        QMessageBox::warning(this,"出错啦!","不能创建文件："+fname);
+        return;
+    }
+
+    QTextStream stream(&fd);
+     stream.setAutoDetectUnicode(false);
+     stream.setGenerateByteOrderMark(true);
+     stream.setCodec("UTF-8");
+     QString readline;
+     m_currentIndexText.clear();
+     while(!fd.atEnd())
+     {
+         readline = fd.readLine().trimmed();
+         if(readline.isEmpty())
+             continue;
+         readline = readline.section('=',1,1);
+         m_currentIndexText.append(readline);
+     }
+     fd.close();
+     edt_dir->setText(m_currentIndexText.takeAt(0));
+     int v = m_currentIndexText.takeAt(0).toInt();
+     cbox_autoopen->setChecked(v == 1 ? true : false);
+     edt_height->setText(m_currentIndexText.at(0));
+     edt_width->setText(m_currentIndexText.at(1));
+     for(int i = 2; i < m_listcbbox.count();i++)
+     {
+         m_listcbbox[i-2]->setCurrentText(m_currentIndexText.at(i));
+     }
+
 }
 
 SystemSettings::~SystemSettings()

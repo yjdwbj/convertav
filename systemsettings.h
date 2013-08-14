@@ -32,9 +32,11 @@ public:
     void setVideoSize(const QSize &x) {edt_width->setText(QString::number(x.width()));edt_height->setText(QString::number(x.height()));}
     void setVideoSize(const int w,const int h) {edt_width->setText(QString::number(w));edt_height->setText(QString::number(h));}
     QStringList getlistAllItems() {return m_listAllItems;}
-    QStringList getCurrentIndexText();
+    QStringList getCurrentIndexText() const {return m_currentIndexText;}
+    void UpdateCurrentIndexText();
     QString getOutputDir() const {return edt_dir->text();}
     void writeCfgToFile(const QString &fname);
+    void readCfgToFile(const QString &fname);
     bool isConvertFinishedAutoOpen() const {return cbox_autoopen->isChecked();}
     QPair<QString,QString> getFilmHW() const { return qMakePair(edt_height->text(),edt_width->text());}
 public slots:
@@ -61,6 +63,8 @@ private:
     QComboBox* cbbox_abitrate;
     QComboBox* cbbox_channel;
     QComboBox* cbbox_samplerate;
+
+    QList<QComboBox*> m_listcbbox;
     QStringList m_listAllItems;
     QStringList m_currentIndexText;
 

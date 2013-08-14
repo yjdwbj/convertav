@@ -3,40 +3,22 @@
 ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent)
     :QTabWidget(parent),
       main_layout(new QGridLayout),
-      btn_convert(new QPushButton),
-      btn_delself(new QPushButton),
+//      btn_convert(new QPushButton),
+//      btn_delself(new QPushButton),
 //      lab_audio(new QLabel),
 //      lab_videoinfo(new QLabel),
-      cbox_selelct(new QCheckBox),
       lab_view(new QLabel("test")),
       m_mencoder(qApp->applicationDirPath() + ("/mencoder.exe"))
 //      lab_time(new QLabel)
 {
      m_item = item;
+     m_item.isSingleConvert = false;
      m_ToolBoxSettings = tbs;
     this->setStyleSheet("QProgressBar {"
                         "background-image: url(:/lcy/image/progress_bk.png);}"
                         "QProgressBar::chunk {"
                         "background-image: url(:/lcy/image/progress_fg.png);}");
-    QHBoxLayout *oneline = new QHBoxLayout;
-    oneline->addWidget(cbox_selelct);
 
-    oneline->addStretch(10);
-    btn_convert->setToolTip(tr("开始转换"));
-    btn_convert->setFixedSize(25,19);
-    btn_convert->setIconSize(btn_convert->size());
-    btn_convert->setIcon(QPixmap(":/lcy/image/converter.png").copy(0,37,25,19));
-    btn_convert->setObjectName("btn_convert");
-    connect(btn_convert,SIGNAL(pressed()),SLOT(slot_MouseOnConvert()));
-    connect(this,SIGNAL(parentConvertSignal()),SLOT(slot_MouseOnConvert()));
-    oneline->addWidget(btn_convert);
-    btn_delself->setFixedSize(39,19);
-    btn_delself->setIconSize(btn_delself->size());
-    btn_delself->setIcon(QPixmap(":/lcy/image/no.png").copy(0,0,39,19));
-    btn_delself->setToolTip("删除该项");
-    connect(btn_delself,SIGNAL(clicked()),SLOT(slot_destoryMySelf()));
-
-    oneline->addWidget(btn_delself);
     lab_view->setFrameShape(QFrame::Panel);
     QImage img(m_item.image);
 
@@ -45,12 +27,12 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
 
     main_layout->addWidget(lab_view,0,0,2,1);
 
-    cbox_selelct->setCheckState(Qt::Checked);
+
 
 
 //    main_layout->addWidget(btn_convert);
 
-    main_layout->addLayout(oneline,0,1);
+    main_layout->addLayout(CreateFirstLine(),0,1);
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
     main_layout->setSpacing(5);
     QWidget *w=new QWidget;
@@ -58,12 +40,96 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
     addTab(w,item.filename);
     this->setToolTip(item.filename);
     fullpath = item.fullpath;
+}
+
+QLayout* ItemView::CreateFirstLine()
+{
+    QHBoxLayout *oneline = new QHBoxLayout;
+
+    btn_rename = new QPushButton(QPixmap(":/lcy/image/pen.png").copy(0,0,14,14),"");
+    btn_rename->setToolTip("重命名");
+    btn_rename->setFixedSize(16,16);
+    oneline->addWidget(btn_rename);
+    connect(btn_rename,SIGNAL(clicked()),SLOT(slot_ReNameFile()));
+
+    QLabel* oname = new QLabel(m_item.filename);
+
+    oneline->addWidget(oname);
+
+//    oneline->addStretch(10);
+    btn_convert = new QPushButton(QPixmap(":/lcy/image/converter.png").copy(0,37,25,19),"");
+    btn_convert->setToolTip(tr("开始转换"));
+    btn_convert->setFixedSize(25,19);
+    btn_convert->setIconSize(btn_convert->size());
+//    btn_convert->setIcon(QPixmap(":/lcy/image/converter.png").copy(0,37,25,19));
+    btn_convert->setObjectName("btn_convert");
+    connect(btn_convert,SIGNAL(pressed()),SLOT(slot_SingleConvert()));
+    connect(this,SIGNAL(parentConvertSignal()),SLOT(slot_MouseOnConvert()));
+    oneline->addWidget(btn_convert);
+
+    btn_delself = new QPushButton(QPixmap(":/lcy/image/no.png").copy(0,0,39,19),"");
+    btn_delself->setFixedSize(39,19);
+    btn_delself->setIconSize(btn_delself->size());
+//    btn_delself->setIcon(QPixmap(":/lcy/image/no.png").copy(0,0,39,19));
+    btn_delself->setToolTip("删除该项");
+    connect(btn_delself,SIGNAL(clicked()),SLOT(slot_destoryMySelf()));
+
+    oneline->addWidget(btn_delself);
+    return oneline;
+}
+
+
+void ItemView::slot_SingleConvert()
+{
+    m_item.isStandby = false;
+    m_item.isSingleConvert = true;
+    slot_MouseOnConvert();
+}
+
+void ItemView::slot_ReNameFile()
+{
+    removeItemLayout(main_layout->itemAtPosition(0,1));
+    main_layout->addLayout(CreateReNameLayout(),0,1);
+}
+
+QLayout* ItemView::CreateReNameLayout()
+{
+    QHBoxLayout *oneline = new QHBoxLayout;
+    btn_rename = new QPushButton(QPixmap(":/lcy/image/pen.png").copy(0,0,14,14),"");
+    btn_rename->setFixedSize(16,16);
+    btn_rename->setToolTip("重命名");
+
+    edt_rename = new QLineEdit;
+    edt_rename->setObjectName("ReName");
+    edt_rename->setText(m_item.filename);
+//    connect(edt_rename,SIGNAL(editingFinished()),SLOT(slot_EditOutOfFoucs()));
+
+    btn_rename_accpet = new QPushButton(QPixmap(":/lcy/image/sure.png").copy(0,0,10,11),"");
+    connect(btn_rename_accpet,SIGNAL(clicked()),SLOT(slot_SureReNameFile()));
+    btn_rename_accpet->setFixedSize(16,16);
+    btn_rename_accpet->setIconSize(btn_rename_accpet->size());
+    btn_rename_accpet->setToolTip("确定");
+
+
+    btn_rename_reject = new QPushButton(QPixmap(":/lcy/image/cancel.png").copy(0,0,10,11),"");
+    connect(btn_rename_reject,SIGNAL(clicked()),SLOT(slot_CancelReNameFile()));
+    btn_rename_reject->setFixedSize(16,16);
+    btn_rename_reject->setIconSize(btn_rename_reject->size());
+    btn_rename_reject->setToolTip("取消");
+
+    oneline->addWidget(btn_rename);
+    oneline->addWidget(edt_rename);
+    oneline->addWidget(btn_rename_accpet);
+    oneline->addWidget(btn_rename_reject);
+    return oneline;
 
 
 }
 
 QLayout* ItemView::CreateItemInfoLayout()
 {
+    cbox_selelct = new QCheckBox;
+    cbox_selelct->setCheckState(Qt::Checked);
     QHBoxLayout *twoline = new QHBoxLayout;
     QLabel* ico_time = new QLabel;
     setDefaultStyleSheet(ico_time,":/lcy/image/time.png");
@@ -94,6 +160,25 @@ QLayout* ItemView::CreateItemInfoLayout()
 
 }
 
+void ItemView::slot_SureReNameFile()
+{
+    m_item.filename = edt_rename->text();
+    removeItemLayout(main_layout->itemAtPosition(0,1));
+    main_layout->addLayout(CreateFirstLine(),0,1);
+}
+
+void ItemView::slot_EditOutOfFoucs()
+{
+    removeItemLayout(main_layout->itemAtPosition(0,1));
+    main_layout->addLayout(CreateFirstLine(),0,1);
+}
+
+void ItemView::slot_CancelReNameFile()
+{
+    removeItemLayout(main_layout->itemAtPosition(0,1));
+    main_layout->addLayout(CreateFirstLine(),0,1);
+}
+
 
 void ItemView::setDefaultStyleSheet(QWidget *w, const QString &image)
 {
@@ -119,15 +204,19 @@ void ItemView::slot_destoryMySelf()
 }
 
 
-void ItemView::removeItemLayout()
+void ItemView::removeItemLayout(QLayoutItem *p)
 {
-    QLayoutItem *p = main_layout->itemAtPosition(1,1);
+
     QHBoxLayout *tw = qobject_cast<QHBoxLayout*>(p->layout());
     while(tw->count())
     {
         QWidget *w = tw->takeAt(0)->widget();
-        tw->removeWidget(w);
-        delete w;
+        if(w)
+        {
+            tw->removeWidget(w);
+            delete w;
+        }
+
     }
     main_layout->removeItem(p);
     main_layout->update();
@@ -138,7 +227,7 @@ void ItemView::slot_MouseOnConvert()
 {
     if(!m_item.isStandby)
     {
-        removeItemLayout();
+        removeItemLayout(main_layout->itemAtPosition(1,1));
         slot_ConvertToStandby();
     }
 
@@ -201,21 +290,25 @@ void ItemView::slot_ConvertToStandby()
 
 
 
-void ItemView::slot_ConvertFinished(int)
+void ItemView::slot_ConvertFinished(int ret)
 {
-    slot_stopConvert();
+//    slot_stopConvert();
+    if(m_item.isSingleConvert)
+    {
+        ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
+        if(cfg.AutoOpen)
+            QDesktopServices::openUrl(QUrl(tr("file:///")+cfg.OutputDir));
+    }
     m_item.isConverted = true;
-//    QPalette p;
-//    QPixmap img(QPixmap(m_item.image).scaled(68,54));
-//    QBitmap mask(":/lcy/image/converted.png");
-//    p.setBrush(QPalette::Window,QBrush(img));
-//    lab_view->setPalette(p);
-//    lab_view->setMask(mask);
-//    lab_view->setWindowFlags(Qt::FramelessWindowHint);
+    m_Process->deleteLater();
+
     lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
-    removeItemLayout();
+    removeItemLayout(main_layout->itemAtPosition(1,1));
     m_Process->deleteLater();
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
+
+
+
 
 
 }
@@ -224,7 +317,7 @@ void ItemView::slot_stopConvert()
 {
     m_Process->kill();
     m_Process->deleteLater();
-    removeItemLayout();
+    removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
 }
 

@@ -11,6 +11,7 @@ typedef struct {
     QString  outputFullPath;
     bool isConverted;
     bool isStandby;
+    bool isSingleConvert;
 } itemstruct;
 
 
