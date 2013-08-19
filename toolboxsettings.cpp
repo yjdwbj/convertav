@@ -1,4 +1,5 @@
 #include "toolboxsettings.h"
+#include <QHeaderView>
 
 ToolBoxSettings::ToolBoxSettings(QWidget *parent)
     :QWidget(parent),
@@ -83,8 +84,11 @@ void ToolBoxSettings::setBaseSettings()
 //    lay_hw->addStretch();
     QLabel *lab_quality = new QLabel("质量");
     QComboBox *cbox_quality = new QComboBox;
-    QLabel *lab_totaltime = new QLabel("总时间");
-    QLineEdit *edt_time = new QLineEdit();
+    QLabel *lab_totaltime = new QLabel("总时间长度");
+//    QLineEdit *edt_time = new QLineEdit();
+
+
+
 
 
 
@@ -95,7 +99,7 @@ void ToolBoxSettings::setBaseSettings()
     base_Layout->addWidget(lab_quality);
     base_Layout->addWidget(cbox_quality);
     base_Layout->addWidget(lab_totaltime);
-    base_Layout->addWidget(edt_time);
+    base_Layout->addWidget(CreateTotalTimeLayout());
 
 
     QWidget *w = new QWidget;
@@ -103,6 +107,54 @@ void ToolBoxSettings::setBaseSettings()
     main_ToolBox->addItem(w,QIcon(":/lcy/image/basic_settings.png"),"基本设置");
 }
 
+
+QWidget* ToolBoxSettings::CreateTotalTimeLayout()
+{
+
+    QTableWidget *tw = new QTableWidget(3,2);
+    tw->setGridStyle(Qt::SolidLine);
+    tw->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tw->setShowGrid(true);
+    tw->setColumnWidth(0,80);
+    tw->horizontalHeader()->setStretchLastSection(true);
+
+    tw->verticalHeader()->setVisible(false);
+    tw->horizontalHeader()->setVisible(false);
+    tw->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    tw->setSpan(0,0,1,2);
+//    tw->resizeColumnsToContents();
+    tw->resizeRowsToContents();
+//    tw->resizeColumnToContents(0);
+
+    QTableWidgetItem *twi_time = new QTableWidgetItem("00:00:00");
+    tw->setItem(0,0,twi_time);
+
+
+
+
+
+    QTableWidgetItem *twi_start = new QTableWidgetItem("转换起始点");
+    QTableWidgetItem *twi_end = new QTableWidgetItem("转换终止点");
+
+    tw->setItem(1,0,twi_start);
+    tw->setItem(2,0,twi_end);
+
+
+
+
+
+
+    tedit_start =  new QTimeEdit();
+    tedit_start->setDisplayFormat("HH:mm:ss");
+    tedit_start->setTime(QTime(0,0,0));
+    tw->setCellWidget(1,1,tedit_start);
+
+    tedit_end  = new   QTimeEdit;
+    tedit_end->setDisplayFormat("HH:mm:ss");
+    tw->setCellWidget(2,1,tedit_end);
+    return tw;
+}
 
 
 void ToolBoxSettings::setVideoSettings()

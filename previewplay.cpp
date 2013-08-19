@@ -12,7 +12,7 @@ const QString img_previewPause (":/lcy/image/previewPause.png");
 const QString img_previewMute (":/lcy/image/previewMute.png");
 const QString img_previewSound (":/lcy/image/previewSound.png");
 
-const char *pause="pause\n";
+const char *pausecmd="pause\n";
 const char *get_percent_pos="get_percent_pos\n";
 
 
@@ -28,17 +28,21 @@ PreViewPlay::PreViewPlay(QWidget *parent)
     QVBoxLayout* insert_layout = new QVBoxLayout(main_gbox);
     insert_layout->setSpacing(0);
     lab_preplay = new QLabel(main_gbox);
-//    lab_preplay->setPalette(QPalette(QColor(0,0,0)));
-    sdr_process = new QSlider(main_gbox);
 
-    sdr_process->setOrientation(Qt::Horizontal);
+    sdr_process = new TimeSlider(main_gbox);
 //    connect(sdr_process,SIGNAL(valueChanged(int)),SLOT(slot_SeekToPos(int)));
-    connect(sdr_process,SIGNAL(sliderMoved(int)),SLOT(slot_SeekToPos(int)));
+//    connect(sdr_process,SIGNAL(sliderMoved(int)),SLOT(slot_SeekToPos(int)));
+//    connect(sdr_process,SIGNAL(draggingPos(int)),SLOT(slot_GoToPosition(int)));
+    connect(sdr_process,SIGNAL(posChanged(int)),SLOT(slot_GoToPosition(int)));
 
 
     setQSliderStyle(sdr_process,img_volume_slider,img_bg,img_ago);
 
-    setDefaultStyleSheet(lab_preplay,img_MediaWnd);
+//    setDefaultStyleSheet(lab_preplay,img_MediaWnd);
+    lab_preplay->setStyleSheet("background-image: url("+img_MediaWnd+");");
+    QImage img(img_MediaWnd);
+
+    lab_preplay->setFixedHeight(img.height());
 
     insert_layout->addWidget(lab_preplay);
     insert_layout->addWidget(sdr_process);
@@ -56,10 +60,6 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 
 
 
-    btn_pause = new QPushButton(sub_gbox);
-    btn_pause->setEnabled(false);
-    setDefaultStyleSheet(btn_pause,img_previewPause,tr("bottom"));
-    connect(btn_pause,SIGNAL(clicked()),SLOT(slot_Pause_Clicked()));
 
     btn_stop = new QPushButton(sub_gbox);
 //    btn_stop->setObjectName("btn_stop");
@@ -80,7 +80,7 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 
 
     hlayout->addWidget(btn_play);
-    hlayout->addWidget(btn_pause);
+
     hlayout->addWidget(btn_stop);
     hlayout->addWidget(btn_mute);
     hlayout->addWidget(sdr_volume);
@@ -97,7 +97,7 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 
     main_layout->addWidget(main_gbox);
     setLayout(main_layout);
-    connect(sdr_volume,SIGNAL(valueChanged(int)),SLOT(slot_QSlider_Changed(int)));
+    connect(sdr_volume,SIGNAL(valueChanged(int)),SLOT(slot_Volume_Changed(int)));
 
 }
 
@@ -116,11 +116,27 @@ void PreViewPlay::slot_SeekToPos(int pos)
 
 }
 
+void PreViewPlay::slot_GoToPosition(int vt)
+{
+    if(isPlaying())
+    {
+        QString cmd = seek_cmd(vt,1);
+        m_PrePlayProcess->write(cmd.toLocal8Bit()+"\n");
+    }
 
+
+}
 
 PreViewPlay::~PreViewPlay()
 {
 
+}
+
+void PreViewPlay::setState(State s) {
+    if (s != _state) {
+        _state = s;
+        emit stateChanged(_state);
+    }
 }
 
 void PreViewPlay::PrePlayFile(const QString &player,const QString &fname)
@@ -141,10 +157,11 @@ void PreViewPlay::PrePlayFile(const QString &player,const QString &fname)
     m_PrePlayProcess->start(player,arg);
     connect(m_PrePlayProcess,SIGNAL(readyReadStandardOutput()),SLOT(slot_Mplay_recevie()));
     btn_play->setEnabled(true);
-//    setDefaultStyleSheet(btn_play,img_previewPause,tr("top"));
+
     btn_stop->setEnabled(true);
-    btn_pause->setEnabled(true);
+
     setDefaultStyleSheet(btn_stop,img_previewStop,tr("top"));
+    setState(Playing);
 }
 
 void PreViewPlay::slot_Mplay_recevie()
@@ -157,13 +174,13 @@ void PreViewPlay::slot_Mplay_recevie()
 
         if(ba.startsWith("ANS_PERCENT_POSITION"))
         {
-            sdr_process->setValue(ba.mid(ba.indexOf("=")+1).toInt());
+//            sdr_process->setValue(ba.mid(ba.indexOf("=")+1).toInt());
         }
     }
 
 }
 
-void PreViewPlay::slot_QSlider_Changed(int pos)
+void PreViewPlay::slot_Volume_Changed(int pos)
 {
 
     pos == this->findChild<QSlider *>("sdr_volume")->minimum()?
@@ -172,10 +189,34 @@ void PreViewPlay::slot_QSlider_Changed(int pos)
 
 }
 
+void PreViewPlay::pause()
+{
+    if(isPlaying())
+        m_PrePlayProcess->write(pausecmd);
+}
+
+
+void PreViewPlay::play()
+{
+    if ((isPlaying()) && (state()==Paused)) {
+        m_PrePlayProcess->write(pausecmd);
+    }
+    else
+        if ((isPlaying()) && (state()==Playing)) {
+
+    }
+
+}
 void PreViewPlay::slot_Play_Clicked()
 {
 
-    QString style = btn_play->styleSheet();
+    if (isPlaying()) {
+        pause();
+    } else {
+        play();
+    }
+
+//   QString style = btn_play->styleSheet();
 //    const QString playstyle = "background-image: url("+img_previewPlay+");background-position: top center;margin: -2px -2px -2px -2px;";
 //    const QString pausestyle = "background-image: url("+img_previewPause+");background-position: top center;margin: -2px -2px -2px -2px;";
 //    if(!style.compare(playstyle))
@@ -199,11 +240,7 @@ void PreViewPlay::slot_Play_Clicked()
 
 }
 
-void PreViewPlay::slot_Pause_Clicked()
-{
-    if(m_PrePlayProcess->state() == QProcess::Running)
-    m_PrePlayProcess->write(pause);
-}
+
 
 void PreViewPlay::slot_Stop_Clicked()
 {
@@ -213,7 +250,7 @@ void PreViewPlay::slot_Stop_Clicked()
                                  background-position: top center;margin: -2px -2px -2px -2px;";
     const QString stopstyle = "background-image: url("+img_previewStop+");\
                                  background-position: bottom center;margin: -2px -2px -2px -2px;";
-
+    setState(Stopped);
     if(btn_stop->isEnabled())
     {
         btn_stop->setStyleSheet(stopstyle);
@@ -263,22 +300,7 @@ void PreViewPlay::slot_Mute_Clicked()
      }
 }
 
-void PreViewPlay::switch_Button_state(QWidget *w, const QString &one, const QString &two)
-{
 
-    QString style = w->styleSheet();
-    const QString onestyle = "background-image: url("+one+");background-position: top center;margin: -2px -2px -2px -2px;";
-    const QString twostyle = "background-image: url("+two+");background-position: top center;margin: -2px -2px -2px -2px;";
-     w->setStyleSheet(!style.compare(twostyle) ? onestyle : twostyle);
-     if(!style.compare(twostyle))
-     {
-         w->setStyleSheet(onestyle);
-     }
-     else
-     {
-     }
-
-}
 
 void PreViewPlay::setDefaultStyleSheet(QWidget *w, const QString &imgname,const QString &position)
 {

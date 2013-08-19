@@ -17,14 +17,18 @@ SOURCES += main.cpp\
     itemoflistfiles.cpp \
     systemsettings.cpp \
     toolboxsettings.cpp \
-    previewplay.cpp
+    previewplay.cpp \
+    myslider.cpp \
+    timeslider.cpp
 
 HEADERS  += mainwindow.h \
     systemsettings.h \
     itemoflistfiles.h \
     toolboxsettings.h \
     previewplay.h \
-    global.h
+    global.h \
+    myslider.h \
+    timeslider.h
 
 FORMS    += mainwindow.ui
 RC_FILE += icon.rc

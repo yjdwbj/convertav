@@ -133,9 +133,11 @@ QLayout* ItemView::CreateItemInfoLayout()
     QHBoxLayout *twoline = new QHBoxLayout;
     QLabel* ico_time = new QLabel;
     setDefaultStyleSheet(ico_time,":/lcy/image/time.png");
+    twoline->addWidget(cbox_selelct);
     twoline->addWidget(ico_time);
     QLabel *lab_time = new QLabel;
     lab_time->setText(m_item.file_time);
+
     twoline->addWidget(lab_time);
     twoline->addStretch();
 

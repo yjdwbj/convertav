@@ -9,24 +9,29 @@
 #include <QtWidgets/QVBoxLayout>
 #include <QMap>
 #include <QProcess>
+#include "timeslider.h"
 
 class PreViewPlay: public QWidget
 {
     Q_OBJECT
 public:
+    enum State { Stopped = 0, Playing = 1, Paused = 2 };
     explicit PreViewPlay(QWidget *parent =0);
     ~PreViewPlay();
 //
     void PrePlayFile(const QString &player, const QString &fname);
 
 private:
+    void setState(State s);
+    State state(){return _state;}
+    State _state;
 //    QGridLayout* main_Layout;
     QGroupBox* main_gbox;
     QLabel *lab_preplay;
-    QSlider *sdr_process;
+    TimeSlider *sdr_process;
 
     QPushButton* btn_play;
-    QPushButton* btn_pause;
+
     QPushButton* btn_stop;
     QProcess *m_PrePlayProcess;
     QPair<QString,QString> m_LastPlay;
@@ -35,17 +40,31 @@ private:
     void setDefaultStyleSheet(QWidget *w, const QString &imgname, const QString &position);
     void setDefaultStyleSheet(QWidget *w, const QString &imgname);
     void setQSliderStyle(QWidget *w, const QString &slider, const QString &add, const QString &sub);
-    void switch_Button_state(QWidget *w,const QString &one,const QString &two);
+
+
+    void stop();
+    void play();
+    void play_or_pause();
+    void pause_and_frame_step();
+    void pause();
+    bool isPlaying() const {return m_PrePlayProcess->state() == QProcess::Running;}
+    QString seek_cmd(double sec,int mode) const {return QString("seek %1 %2").arg(sec).arg(mode);}
 public slots:
     void slot_Stop_Clicked();
-    void slot_Pause_Clicked();
+
 private slots:
     void slot_Play_Clicked();
+//    void changePause();
 
     void slot_Mute_Clicked();
-    void slot_QSlider_Changed(int );
+    void slot_Volume_Changed(int );
     void slot_Mplay_recevie();
     void slot_SeekToPos(int);
+    void slot_GoToPosition(int);
+
+
+signals:
+    void stateChanged(PreViewPlay::State state);
 
 };
 

@@ -10,6 +10,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QGroupBox>
 #include "systemsettings.h"
+#include <QtWidgets/QTimeEdit>
+#include <QTableView>
+#include <QTableWidget>
 
 class ToolBoxSettings: public QWidget
 {
@@ -29,6 +32,7 @@ private:
     void setBaseSettings();
     void setAudioSettings();
     void setVideoSettings();
+    QWidget *CreateTotalTimeLayout();
     QVBoxLayout* base_Layout;
     QVBoxLayout* audio_Layout;
     QVBoxLayout* video_Layout;
@@ -43,11 +47,17 @@ private:
     QComboBox* cbbox_abitrate;
     QComboBox* cbbox_channel;
     QComboBox* cbbox_samplerate;
+
+
+    QTimeEdit* tedit_start;
+    QTimeEdit* tedit_end;
     SystemSettings *m_sys;
     QList<QComboBox*> m_listComboBox;
     QLineEdit *edt_high;
     QLineEdit *edt_width;
     ConvertCfg m_ConvertCfg;
+
+
 
 
 };
