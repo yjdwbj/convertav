@@ -18,6 +18,8 @@ typedef struct {
 typedef struct {
     QString OutputDir;
     bool AutoOpen;
+    QString StartTime;
+    QString Endpos;
     QString Height;
     QString Width;
     QString VEncoder;

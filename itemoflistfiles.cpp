@@ -40,6 +40,7 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
     addTab(w,item.filename);
     this->setToolTip(item.filename);
     fullpath = item.fullpath;
+
 }
 
 QLayout* ItemView::CreateFirstLine()
@@ -195,10 +196,6 @@ ItemView::~ItemView()
 
 }
 
-void ItemView::slot_DClickToPlay()
-{
-
-}
 
 void ItemView::slot_destoryMySelf()
 {
@@ -242,13 +239,26 @@ void ItemView::slot_MouseOnConvert()
 //    mencoder.exe  -of lavf   -oac pcm -ovc lavc -lavcopts  \
 //    acodec=pcm_u8:vcodec=mjpeg:abitrate=96:vbitrate=640:vpass=1:aspect=16/9 -ofps 15 \
 //    -af lavcresample=16000:channels=2  -vf scale -zoom -xy 160 AlanSiegel_2010-low-zh-cn.mp4 -o ppp.avi
-    arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-        << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-           +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-        << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-        << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+    if(!cfg.Endpos.compare("00:00:00"))
+    {
+        arg <<"-ss" <<cfg.StartTime   << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
+            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
+               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
+            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
+            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+    }
+    else
+    {
+        arg <<"-ss" <<cfg.StartTime << "-endpos" << cfg.Endpos  << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
+            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
+               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
+            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
+            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+    }
+
     m_Process->start(m_mencoder,arg);
-    while(m_Process->waitForFinished(1000))
+//    while(m_Process->waitForFinished(1000));
+    while(!m_Process->waitForFinished(1000))
          QCoreApplication::processEvents();
 
 }
@@ -269,6 +279,7 @@ void ItemView::slot_ConvertingStandardOutput()
 
 void ItemView::slot_ConvertToStandby()
 {
+    removeItemLayout(main_layout->itemAtPosition(1,1));
     QHBoxLayout* convert_lay = new QHBoxLayout;
     QProgressBar *pgbar = new QProgressBar;
     pgbar->setObjectName("pgbar");
@@ -302,16 +313,13 @@ void ItemView::slot_ConvertFinished(int ret)
             QDesktopServices::openUrl(QUrl(tr("file:///")+cfg.OutputDir));
     }
     m_item.isConverted = true;
-    m_Process->deleteLater();
 
+    m_Process->deleteLater();
     lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
     removeItemLayout(main_layout->itemAtPosition(1,1));
-    m_Process->deleteLater();
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
-
-
-
-
+//    removeItemLayout(main_layout->itemAtPosition(1,1));
+//    main_layout->addLayout(CreateItemInfoLayout(),1,1);
 
 }
 

@@ -50,9 +50,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lwt_ConverFiles->setFixedWidth(600);
 
-//    this->setStyleSheet("QLineEdit {background-color: yellow}");
-    connect(lwt_ConverFiles,SIGNAL(clicked(QModelIndex)),SLOT(slot_DClickToPrePlay(QModelIndex)));
-//    connect(lwt_ConverFiles,SIGNAL(itemDoubleClicked(QListWidgetItem*)),SLOT(slot_DClickToPrePlay(QListWidgetItem*)));
+
+    connect(lwt_ConverFiles,SIGNAL(itemClicked(QListWidgetItem*)),SLOT(slot_ClickToSetCurrentRow(QListWidgetItem*)));
+
     //    lwt_ConverFiles->setAlternatingRowColors(true);
     lwt_ConverFiles->setResizeMode(QListView::Fixed);
     lwt_ConverFiles->setAcceptDrops(true);
@@ -90,6 +90,29 @@ MainWindow::MainWindow(QWidget *parent) :
     QWidget *w = new QWidget(parent);
     w->setLayout(layout_main);
     setCentralWidget(w);
+}
+
+void MainWindow::slot_ClickToSetCurrentRow(QListWidgetItem *p)
+{
+    ItemView  *iv= (ItemView*)lwt_ConverFiles->itemWidget(p);
+   QLineEdit *le = iv->findChild<QLineEdit*>("ReName");
+   if(le)
+   {
+       iv->slot_CancelReNameFile();
+       return;
+   }
+   int row = lwt_ConverFiles->row(p);
+    if(p==lwt_ConverFiles->currentItem())
+    {
+        m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[row]);
+    }
+    else
+    {
+        lwt_ConverFiles->setCurrentItem(p);
+        itemstruct t = m_listitemstruct.at(row);
+        m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(t.file_time,t.filename));
+    }
+
 }
 
 void MainWindow::FilesOrDirNoExists(const QString &in)
@@ -186,14 +209,18 @@ void MainWindow::fillFiletoListWidget(const QStringList &list)
                 item.file_time = nt.toString(tr("hh:mm:ss.zzz"));
             }
         }
+        if(!i)
+        m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(item.file_time,item.filename));
         readlist.clear();
         QListWidgetItem *lwt2 = new QListWidgetItem("",lwt_ConverFiles);
         lwt2->setSizeHint(QSize(500,100));
+        m_listitemstruct.append(item);
         ItemView  *iv= new ItemView(item,m_ToolBoxSettings);
         connect(iv,SIGNAL(parentDeleteMe(QWidget*)),SLOT(slot_removeItem(QWidget*)));
         lwt_ConverFiles->setItemWidget(lwt2,iv);
 
     }
+    lwt_ConverFiles->setCurrentRow(0);
 }
 void MainWindow::slot_removeItem(QWidget *p)
 {
@@ -205,6 +232,7 @@ void MainWindow::slot_removeItem(QWidget *p)
             lwt_ConverFiles->removeItemWidget(tmp);
             lwt_ConverFiles->takeItem(i);
             m_listItems.removeAt(i);
+            m_listitemstruct.removeAt(i);
             m_PreViewPlay->slot_Stop_Clicked();
 //            QMouseEvent qm2(QEvent::MouseButtonPress, m_PreViewPlay->btn_stop->pos(), Qt::LeftButton , Qt::LeftButton,    Qt::NoModifier);
 //            QApplication::sendEvent(m_PreViewPlay->btn_stop,
@@ -239,6 +267,13 @@ void MainWindow::slot_DClickToPrePlay(QModelIndex mindex)
    m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[mindex.row()]);
 }
 
+void MainWindow::slot_DClickToPrePlay(QListWidgetItem *p)
+{
+//    ItemView  *iv= (ItemView*)lwt_ConverFiles->itemWidget(p);
+    m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[lwt_ConverFiles->row(p)]);
+
+}
+
 
 void MainWindow::slot_ConvertAll()
 {
@@ -250,11 +285,12 @@ void MainWindow::slot_ConvertAll()
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
         iw->slot_ConvertToStandby();
     }
+
     for(int i = 0 ; i < lwt_ConverFiles->count();i++)
     {
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
         iw->slot_MouseOnConvert();
-        while(iw->m_Process->waitForFinished(1000));
+//        while(!proc->waitForFinished(1000));
     }
     SystemSettings *s = new SystemSettings;
     if(s->isConvertFinishedAutoOpen())

@@ -44,7 +44,7 @@ private:
 
     void stop();
     void play();
-    void play_or_pause();
+
     void pause_and_frame_step();
     void pause();
     bool isPlaying() const {return m_PrePlayProcess->state() == QProcess::Running;}
@@ -53,13 +53,13 @@ public slots:
     void slot_Stop_Clicked();
 
 private slots:
-    void slot_Play_Clicked();
-//    void changePause();
+    void play_or_pause();
+    void changePause();
 
     void slot_Mute_Clicked();
     void slot_Volume_Changed(int );
     void slot_Mplay_recevie();
-    void slot_SeekToPos(int);
+
     void slot_GoToPosition(int);
 
 

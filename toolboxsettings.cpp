@@ -17,7 +17,11 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
       cbbox_samplerate(new QComboBox),
       m_sys(new SystemSettings),
       edt_high(new QLineEdit),
-      edt_width(new QLineEdit)
+      edt_width(new QLineEdit),
+      twi_time(new QTableWidgetItem("00:00:00")),
+      tedit_start(new QTimeEdit()),
+      tedit_end(new   QTimeEdit),
+      edt_fname(new QLineEdit())
 {
     QGroupBox *main_gbox = new QGroupBox();
     main_ToolBox = new QToolBox(main_gbox);
@@ -64,7 +68,7 @@ void ToolBoxSettings::setFilmHW(QPair<QString, QString> pair)
 void ToolBoxSettings::setBaseSettings()
 {
     QLabel *lab_fname = new QLabel("文件名");
-    QLineEdit *edt_fname = new QLineEdit();
+    edt_fname->setReadOnly(true);
     QLabel *lab_vsize = new QLabel("视频大小");
     QHBoxLayout *lay_hw = new QHBoxLayout;
     QLabel *lab_high = new QLabel("高:");
@@ -99,7 +103,8 @@ void ToolBoxSettings::setBaseSettings()
     base_Layout->addWidget(lab_quality);
     base_Layout->addWidget(cbox_quality);
     base_Layout->addWidget(lab_totaltime);
-    base_Layout->addWidget(CreateTotalTimeLayout());
+    CreateTotalTimeLayout();
+    base_Layout->addWidget(tw_time);
 
 
     QWidget *w = new QWidget;
@@ -108,54 +113,63 @@ void ToolBoxSettings::setBaseSettings()
 }
 
 
-QWidget* ToolBoxSettings::CreateTotalTimeLayout()
+void ToolBoxSettings::CreateTotalTimeLayout()
 {
 
-    QTableWidget *tw = new QTableWidget(3,2);
-    tw->setGridStyle(Qt::SolidLine);
-    tw->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    tw->setShowGrid(true);
-    tw->setColumnWidth(0,80);
-    tw->horizontalHeader()->setStretchLastSection(true);
+    tw_time = new QTableWidget(3,2);
 
-    tw->verticalHeader()->setVisible(false);
-    tw->horizontalHeader()->setVisible(false);
-    tw->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    tw->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    tw->setSpan(0,0,1,2);
+    tw_time->setGridStyle(Qt::SolidLine);
+    tw_time->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tw_time->setShowGrid(true);
+    tw_time->setColumnWidth(0,80);
+    tw_time->horizontalHeader()->setStretchLastSection(true);
+
+    tw_time->verticalHeader()->setVisible(false);
+    tw_time->horizontalHeader()->setVisible(false);
+    tw_time->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    tw_time->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    tw_time->setSpan(0,0,1,2);
 //    tw->resizeColumnsToContents();
-    tw->resizeRowsToContents();
+    tw_time->resizeRowsToContents();
 //    tw->resizeColumnToContents(0);
 
-    QTableWidgetItem *twi_time = new QTableWidgetItem("00:00:00");
-    tw->setItem(0,0,twi_time);
+
+    tw_time->setItem(0,0,twi_time);
+
+    twi_start = new QTableWidgetItem("转换起始点");
+    twi_end = new QTableWidgetItem("转换终止点");
+
+    tw_time->setItem(1,0,twi_start);
+    tw_time->setItem(2,0,twi_end);
 
 
 
-
-
-    QTableWidgetItem *twi_start = new QTableWidgetItem("转换起始点");
-    QTableWidgetItem *twi_end = new QTableWidgetItem("转换终止点");
-
-    tw->setItem(1,0,twi_start);
-    tw->setItem(2,0,twi_end);
-
-
-
-
-
-
-    tedit_start =  new QTimeEdit();
     tedit_start->setDisplayFormat("HH:mm:ss");
     tedit_start->setTime(QTime(0,0,0));
-    tw->setCellWidget(1,1,tedit_start);
+    tw_time->setCellWidget(1,1,tedit_start);
 
-    tedit_end  = new   QTimeEdit;
+
+    tedit_end->setObjectName("endTime");
     tedit_end->setDisplayFormat("HH:mm:ss");
-    tw->setCellWidget(2,1,tedit_end);
-    return tw;
+    tw_time->setCellWidget(2,1,tedit_end);
+    connect(tedit_start,SIGNAL(editingFinished()),SLOT(slot_updateTime()));
+    connect(tedit_end,SIGNAL(editingFinished()),SLOT(slot_updateTime()));
+
 }
 
+
+void ToolBoxSettings::slot_updateTime()
+{
+    updateStructConvertCfg();
+}
+
+void ToolBoxSettings::setTimeAndNameToTable(const QPair<QString,QString> &pair)
+{
+
+     twi_time->setText(pair.first.section(".",0,0));
+     tedit_end->setTime(QTime::fromString(twi_time->text(),"HH:mm:ss"));
+     edt_fname->setText(pair.second);
+}
 
 void ToolBoxSettings::setVideoSettings()
 {
@@ -226,6 +240,11 @@ void ToolBoxSettings::updateStructConvertCfg()
     m_ConvertCfg.SampleRate = cbbox_samplerate->currentText();
     m_ConvertCfg.VBitRate = cbox_vbitrate->currentText();
     m_ConvertCfg.VEncoder = cbox_vencoder->currentText();
+
+    m_ConvertCfg.StartTime = tedit_start->text();
+
+    m_ConvertCfg.Endpos=tedit_end->text();
+
 }
 
 ToolBoxSettings::~ToolBoxSettings()

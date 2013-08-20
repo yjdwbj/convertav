@@ -40,13 +40,13 @@ public slots:
 
 private slots:
     void slot_SingleConvert();
-    void slot_DClickToPlay();
     void slot_ConvertFinished(int);
     void slot_ConvertingStandardOutput();
     void slot_ReNameFile();
     void slot_SureReNameFile();
 
     void slot_EditOutOfFoucs();
+
 
 
 private:

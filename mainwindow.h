@@ -29,6 +29,8 @@ public:
 private slots:
     void slot_openfiles();
     void slot_DClickToPrePlay(QModelIndex);
+    void slot_DClickToPrePlay(QListWidgetItem *);
+    void slot_ClickToSetCurrentRow(QListWidgetItem *);
     void slot_ConvertAll();
     void slot_Settings();
     void slot_removeItem(QWidget *);
@@ -49,6 +51,7 @@ private:
     QString m_mplayer;
     QString m_mencoder;
     QList<QListWidgetItem*> m_listwidgetitem;
+    QList<itemstruct> m_listitemstruct;
     QStringList m_listItems;
     bool m_AfterConvertAutoOpen;
 

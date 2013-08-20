@@ -25,18 +25,22 @@ public:
     void updateToolBox(QStringList list);
     ConvertCfg getConvertArgments() const{return m_ConvertCfg;}
     void updateStructConvertCfg();
+    void setTimeAndNameToTable(const QPair<QString, QString> &pair);
+
 private slots:
 
     void SomeValueHasChanged(QString);
+    void slot_updateTime();
 private:
     void setBaseSettings();
     void setAudioSettings();
     void setVideoSettings();
-    QWidget *CreateTotalTimeLayout();
+    void CreateTotalTimeLayout();
     QVBoxLayout* base_Layout;
     QVBoxLayout* audio_Layout;
     QVBoxLayout* video_Layout;
     QToolBox *main_ToolBox;
+    QLineEdit *edt_fname;
 
     QComboBox* cbox_vencoder;
     QComboBox* cbox_hwrate;
@@ -47,6 +51,10 @@ private:
     QComboBox* cbbox_abitrate;
     QComboBox* cbbox_channel;
     QComboBox* cbbox_samplerate;
+    QTableWidget *tw_time;
+    QTableWidgetItem *twi_start;
+    QTableWidgetItem *twi_end;
+    QTableWidgetItem *twi_time;
 
 
     QTimeEdit* tedit_start;

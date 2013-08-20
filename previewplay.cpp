@@ -30,9 +30,10 @@ PreViewPlay::PreViewPlay(QWidget *parent)
     lab_preplay = new QLabel(main_gbox);
 
     sdr_process = new TimeSlider(main_gbox);
-//    connect(sdr_process,SIGNAL(valueChanged(int)),SLOT(slot_SeekToPos(int)));
-//    connect(sdr_process,SIGNAL(sliderMoved(int)),SLOT(slot_SeekToPos(int)));
-//    connect(sdr_process,SIGNAL(draggingPos(int)),SLOT(slot_GoToPosition(int)));
+   sdr_process->setEnabled(false);
+
+
+
     connect(sdr_process,SIGNAL(posChanged(int)),SLOT(slot_GoToPosition(int)));
 
 
@@ -56,7 +57,8 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 //    btn_play->setObjectName("btn_play");
     btn_play->setEnabled(false);
     setDefaultStyleSheet(btn_play,img_previewPlay,tr("top"));
-    connect(btn_play,SIGNAL(pressed()),SLOT(slot_Play_Clicked()));
+    connect(btn_play,SIGNAL(clicked()),SLOT(play_or_pause()));
+//    connect(btn_play,SIGNAL(pressed()),SLOT(slot_Play_Clicked()));
 
 
 
@@ -101,18 +103,8 @@ PreViewPlay::PreViewPlay(QWidget *parent)
 
 }
 
-void PreViewPlay::slot_SeekToPos(int pos)
+void PreViewPlay::changePause()
 {
-
-//    QString seek("seek "+QString::number(pos)+" 1\n");
-
-    QString seek= QString("seek %1 %2").arg(QString::number(pos)).arg(QString::number(1));
-    m_PrePlayProcess->write(seek.toLocal8Bit()+"\n");
-
-//    slot_Mplay_recevie();
-
-
-
 
 }
 
@@ -161,6 +153,7 @@ void PreViewPlay::PrePlayFile(const QString &player,const QString &fname)
     btn_stop->setEnabled(true);
 
     setDefaultStyleSheet(btn_stop,img_previewStop,tr("top"));
+    sdr_process->setEnabled(true);
     setState(Playing);
 }
 
@@ -192,7 +185,11 @@ void PreViewPlay::slot_Volume_Changed(int pos)
 void PreViewPlay::pause()
 {
     if(isPlaying())
+    {
         m_PrePlayProcess->write(pausecmd);
+        setState(Paused);
+    }
+
 }
 
 
@@ -205,38 +202,19 @@ void PreViewPlay::play()
         if ((isPlaying()) && (state()==Playing)) {
 
     }
+    setState(Playing);
 
 }
-void PreViewPlay::slot_Play_Clicked()
+void PreViewPlay::play_or_pause()
 {
 
-    if (isPlaying()) {
-        pause();
-    } else {
-        play();
-    }
+//    if (isPlaying()) {
+//        pause();
+//    } else {
+//        play();
+//    }
 
-//   QString style = btn_play->styleSheet();
-//    const QString playstyle = "background-image: url("+img_previewPlay+");background-position: top center;margin: -2px -2px -2px -2px;";
-//    const QString pausestyle = "background-image: url("+img_previewPause+");background-position: top center;margin: -2px -2px -2px -2px;";
-//    if(!style.compare(playstyle))
-//     {
-//         btn_play->setStyleSheet( pausestyle);
-//         setDefaultStyleSheet(btn_stop,img_previewStop,"top");
-//         btn_stop->setEnabled(true);
-//     }
-//     else
-//     {
-//         btn_play->setStyleSheet( playstyle);
-//         setDefaultStyleSheet(btn_stop,img_previewStop,"bottom");
-//         btn_stop->setEnabled(false);
-//         if(!m_PrePlayProcess->state())
-//         {
-//           PrePlayFile(m_LastPlay.first,m_LastPlay.second);
-//         }
-//     }
     PrePlayFile(m_LastPlay.first,m_LastPlay.second);
-
 
 }
 
@@ -251,6 +229,7 @@ void PreViewPlay::slot_Stop_Clicked()
     const QString stopstyle = "background-image: url("+img_previewStop+");\
                                  background-position: bottom center;margin: -2px -2px -2px -2px;";
     setState(Stopped);
+    sdr_process->setEnabled(false);
     if(btn_stop->isEnabled())
     {
         btn_stop->setStyleSheet(stopstyle);
