@@ -79,6 +79,7 @@ private:
     QLayout* CreateConvertingLayout();
     QLayout* CreateFirstLine();
     void removeItemLayout(QLayoutItem *p);
+    void removeTempFile(const QString &file);
 
 
 Q_SIGNALS:

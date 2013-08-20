@@ -11,6 +11,8 @@
 #include <QPalette>
 
 
+const char *version=" v1.01";
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -30,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    m_AppPath = qApp->applicationDirPath();
 //    m_mplayer = m_AppPath + ("/mplayer.exe");
 //    m_mencoder = m_AppPath +("/mencoder.exe");
+    setWindowTitle(QString("视频转换工具")+version);
 
     QPixmap pixmap("::/lcy/image/bg-sel.png");
     m_brush.setTexture(pixmap);

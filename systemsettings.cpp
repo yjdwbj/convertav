@@ -273,11 +273,11 @@ void SystemSettings::readCfgToFile(const QString &fname)
      edt_dir->setText(m_currentIndexText.takeAt(0));
      int v = m_currentIndexText.takeAt(0).toInt();
      cbox_autoopen->setChecked(v == 1 ? true : false);
-     edt_height->setText(m_currentIndexText.at(0));
-     edt_width->setText(m_currentIndexText.at(1));
-     for(int i = 2; i < m_listcbbox.count();i++)
+     edt_height->setText(m_currentIndexText.takeAt(0));
+     edt_width->setText(m_currentIndexText.takeAt(0));
+     for(int i = 0; i < m_listcbbox.count();i++)
      {
-         m_listcbbox[i-2]->setCurrentText(m_currentIndexText.at(i));
+         m_listcbbox[i]->setCurrentText(m_currentIndexText.at(i));
      }
 
 }

@@ -142,8 +142,6 @@ void ToolBoxSettings::CreateTotalTimeLayout()
     tw_time->setItem(1,0,twi_start);
     tw_time->setItem(2,0,twi_end);
 
-
-
     tedit_start->setDisplayFormat("HH:mm:ss");
     tedit_start->setTime(QTime(0,0,0));
     tw_time->setCellWidget(1,1,tedit_start);
@@ -240,10 +238,8 @@ void ToolBoxSettings::updateStructConvertCfg()
     m_ConvertCfg.SampleRate = cbbox_samplerate->currentText();
     m_ConvertCfg.VBitRate = cbox_vbitrate->currentText();
     m_ConvertCfg.VEncoder = cbox_vencoder->currentText();
-
     m_ConvertCfg.StartTime = tedit_start->text();
-
-    m_ConvertCfg.Endpos=tedit_end->text();
+    m_ConvertCfg.Endpos= tedit_end->text();
 
 }
 

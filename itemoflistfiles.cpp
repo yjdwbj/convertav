@@ -85,6 +85,7 @@ void ItemView::slot_SingleConvert()
     m_item.isStandby = false;
     m_item.isSingleConvert = true;
     m_item.isCancelConvert = false;
+    m_item.isConverted = false;
     slot_MouseOnConvert();
 }
 
@@ -227,8 +228,7 @@ void ItemView::removeItemLayout(QLayoutItem *p)
 
 void ItemView::slot_MouseOnConvert()
 {
-    if(m_item.isCancelConvert ||
-            m_item.isConverted)
+    if(m_item.isCancelConvert)
         return;
     if(!m_item.isStandby)
     {
@@ -245,22 +245,45 @@ void ItemView::slot_MouseOnConvert()
 //    mencoder.exe  -of lavf   -oac pcm -ovc lavc -lavcopts  \
 //    acodec=pcm_u8:vcodec=mjpeg:abitrate=96:vbitrate=640:vpass=1:aspect=16/9 -ofps 15 \
 //    -af lavcresample=16000:channels=2  -vf scale -zoom -xy 160 AlanSiegel_2010-low-zh-cn.mp4 -o ppp.avi
+    QProcess *first_p = new QProcess;
+    QStringList first_arg;
+
     if(!cfg.Endpos.compare("00:00:00"))
     {
-        arg <<"-ss" <<cfg.StartTime   << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+        first_arg << "-ss" << cfg.StartTime
+                  << "-oac" << cfg.AEncoder << "-ovc" << "copy" << m_item.fullpath << "-o" << m_item.outputFullPath+".bak";
     }
     else
     {
-        arg <<"-ss" <<cfg.StartTime << "-endpos" << cfg.Endpos  << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+        first_arg << "-ss" << cfg.StartTime << "-endpos" << cfg.Endpos
+                  << "-oac" << cfg.AEncoder << "-ovc"<<"copy" << m_item.fullpath <<  "-o" << m_item.outputFullPath+".bak";
     }
+    first_p->start(m_mencoder,first_arg);
+    while(!first_p->waitForFinished(500))
+        QApplication::processEvents();
+
+//    if(!cfg.Endpos.compare("00:00:00"))
+//    {
+//        arg <<"-ss" <<cfg.StartTime   << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
+//            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
+//               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
+//            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
+//            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+//    }
+//    else
+//    {
+//        arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
+//            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
+//               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
+//            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
+//            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
+//    }
+
+    arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
+        << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
+           +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
+        << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
+        << "-xy" << cfg.Height << m_item.outputFullPath+".bak" << "-o" << m_item.outputFullPath;
 
     _state = Converting;
     m_Process->start(m_mencoder,arg);
@@ -307,11 +330,9 @@ QLayout* ItemView::CreateConvertingLayout()
 
 void ItemView::slot_ConvertToStandby()
 {
-//    if(m_item.isConverted)
-//        return;
-//    if(!m_item.isSingleConvert)
-    removeItemLayout(main_layout->itemAtPosition(1,1));
 
+
+    removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateConvertingLayout(),1,1);
     m_item.isStandby = true;
     m_item.isCancelConvert = false;
@@ -322,31 +343,39 @@ void ItemView::slot_ConvertToStandby()
 
 void ItemView::slot_ConvertFinished(int ret)
 {
-
+    removeTempFile(m_item.outputFullPath+".bak");
     _state = Stopped;
-    if(m_item.isSingleConvert)
-    {
-        ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
-        if(cfg.AutoOpen)
-            QDesktopServices::openUrl(QUrl(tr("file:///")+cfg.OutputDir));
-    }
-
-
-    m_Process->deleteLater();
     if(m_Process->exitStatus()==QProcess::NormalExit)
     {
         m_item.isConverted = true;
         lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
     }
+    if(m_item.isSingleConvert)
+    {
+        ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
+        if(cfg.AutoOpen && m_item.isConverted)
+            QDesktopServices::openUrl(QUrl(tr("file:///")+cfg.OutputDir));
+    }
+
+
+
+
 
     removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
 
 }
 
+void ItemView::removeTempFile(const QString &file)
+{
+    QFile::remove(file);
+}
+
 void ItemView::slot_stopConvert()
 {
-    if(getState() == Stopped)
+    removeTempFile(m_item.outputFullPath+".bak");
+    if((getState() == Stopped)
+            && m_item.isStandby)
     {
         m_item.isCancelConvert = true;
         removeItemLayout(main_layout->itemAtPosition(1,1));
