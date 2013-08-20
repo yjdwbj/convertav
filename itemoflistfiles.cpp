@@ -84,6 +84,7 @@ void ItemView::slot_SingleConvert()
 {
     m_item.isStandby = false;
     m_item.isSingleConvert = true;
+    m_item.isCancelConvert = false;
     slot_MouseOnConvert();
 }
 
@@ -207,6 +208,8 @@ void ItemView::removeItemLayout(QLayoutItem *p)
 {
 
     QHBoxLayout *tw = qobject_cast<QHBoxLayout*>(p->layout());
+    if(!tw)
+        return ;
     while(tw->count())
     {
         QWidget *w = tw->takeAt(0)->widget();
@@ -224,12 +227,13 @@ void ItemView::removeItemLayout(QLayoutItem *p)
 
 void ItemView::slot_MouseOnConvert()
 {
-    if(m_item.isCancelConvert)
+    if(m_item.isCancelConvert ||
+            m_item.isConverted)
         return;
     if(!m_item.isStandby)
     {
         removeItemLayout(main_layout->itemAtPosition(1,1));
-        slot_ConvertToStandby();
+        main_layout->addLayout(CreateConvertingLayout(),1,1);
     }
 
     m_Process = new QProcess;
@@ -260,9 +264,6 @@ void ItemView::slot_MouseOnConvert()
 
     _state = Converting;
     m_Process->start(m_mencoder,arg);
-//    while(!m_Process->waitForFinished(500))
-//         QCoreApplication::processEvents();
-
 }
 
 void ItemView::slot_ConvertingStandardOutput()
@@ -282,9 +283,8 @@ void ItemView::slot_ConvertingStandardOutput()
     }
 }
 
-void ItemView::slot_ConvertToStandby()
+QLayout* ItemView::CreateConvertingLayout()
 {
-    removeItemLayout(main_layout->itemAtPosition(1,1));
     QHBoxLayout* convert_lay = new QHBoxLayout;
     QProgressBar *pgbar = new QProgressBar;
     pgbar->setObjectName("pgbar");
@@ -301,7 +301,18 @@ void ItemView::slot_ConvertToStandby()
     btn_stop->setToolTip("取消转换");
     convert_lay->addWidget(pgbar);
     convert_lay->addWidget(btn_stop);
-    main_layout->addLayout(convert_lay,1,1);
+    return convert_lay;
+}
+
+
+void ItemView::slot_ConvertToStandby()
+{
+//    if(m_item.isConverted)
+//        return;
+//    if(!m_item.isSingleConvert)
+    removeItemLayout(main_layout->itemAtPosition(1,1));
+
+    main_layout->addLayout(CreateConvertingLayout(),1,1);
     m_item.isStandby = true;
     m_item.isCancelConvert = false;
 }

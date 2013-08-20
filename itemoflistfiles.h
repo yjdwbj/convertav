@@ -76,6 +76,7 @@ private:
     QLayout* CreateReNameLayout();
     void setDefaultStyleSheet(QWidget *w, const QString &image);
     QLayout* CreateItemInfoLayout();
+    QLayout* CreateConvertingLayout();
     QLayout* CreateFirstLine();
     void removeItemLayout(QLayoutItem *p);
 

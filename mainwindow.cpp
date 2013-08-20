@@ -142,11 +142,37 @@ void MainWindow::ReadOrCreateCfg()
 
 void MainWindow::slot_openfiles()
 {
+    QFile fd(QFileInfo(m_configfile).absolutePath()+"/lastopen");
+    if(fd.open(QIODevice::ReadOnly|QIODevice::Text))
+    {
+//        QTextStream ts(&fd);
+//        ts.setAutoDetectUnicode(false);
+//        ts.setGenerateByteOrderMark(true);
+//        ts.setCodec("UTF-8");
+        m_LastPath =fd.readLine().trimmed();
+        fd.close();
+    }
 
+    if(m_LastPath.isEmpty())
+    m_LastPath = QFileInfo(m_configfile).absolutePath();
     QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),m_LastPath,tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv *.wmv *.mov)"));
 
     if(listfiles.count() >0)
-    m_LastPath = QFileInfo(listfiles.at(0)).absolutePath();
+    {
+        m_LastPath = QFileInfo(listfiles.at(0)).absolutePath();
+
+        if(fd.open(QIODevice::WriteOnly|QIODevice::Text))
+        {
+            QTextStream ts(&fd);
+            ts.setAutoDetectUnicode(false);
+            ts.setGenerateByteOrderMark(true);
+            ts.setCodec("UTF-8");
+            ts << m_LastPath;
+            fd.close();
+        }
+
+    }
+
 
     if(listfiles.isEmpty())
         return ;
