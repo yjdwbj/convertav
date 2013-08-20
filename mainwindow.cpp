@@ -24,11 +24,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_mencoder(m_AppPath + ("/mencoder.exe")),
     m_PreViewPlay(new PreViewPlay),
     m_PrePlayProcess(new QProcess),
-    m_ToolBoxSettings(new ToolBoxSettings)
+    m_ToolBoxSettings(new ToolBoxSettings),
+    m_LastPath("")
 {
 //    m_AppPath = qApp->applicationDirPath();
 //    m_mplayer = m_AppPath + ("/mplayer.exe");
 //    m_mencoder = m_AppPath +("/mencoder.exe");
+
+    QPixmap pixmap("::/lcy/image/bg-sel.png");
+    m_brush.setTexture(pixmap);
+    m_palette.setBrush(backgroundRole(), QBrush(pixmap));
+
+
 
     this->setWindowFlags(Qt::WindowMinimizeButtonHint|
                          Qt::WindowCloseButtonHint);
@@ -67,8 +74,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     btn_OpenFile->setFixedSize(112,26);
     btn_OpenFile->setIconSize(btn_OpenFile->size());
+//    btn_OpenFile->setIcon(QPixmap(":/lcy/image/video+.png").copy(0,0,112,26));
     QPalette palette;
-    palette.setBrush(QPalette::Active,QPalette::Button,QBrush(QPixmap(":/lcy/image/video+.png").copy(0,0,112,26)));
+    palette.setBrush(QPalette::All,QPalette::Button,QBrush(QPixmap(":/lcy/image/video+.png").copy(0,0,112,26)));
     btn_OpenFile->setPalette(palette);
 
     connect(btn_OpenFile,SIGNAL(clicked()),SLOT(slot_openfiles()));
@@ -135,7 +143,10 @@ void MainWindow::ReadOrCreateCfg()
 void MainWindow::slot_openfiles()
 {
 
-    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),"D:/testing-Video",tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv *.wmv *.mov)"));
+    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),m_LastPath,tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv *.wmv *.mov)"));
+
+    if(listfiles.count() >0)
+    m_LastPath = QFileInfo(listfiles.at(0)).absolutePath();
 
     if(listfiles.isEmpty())
         return ;
@@ -153,6 +164,14 @@ void MainWindow::fillFiletoListWidget(const QStringList &list)
     QStringList readlist;
     for(int i = 0; i < list.count() ; i++)
     {
+        itemstruct item;
+        QString numimg("0000000");
+        numimg.append(QString::number(i));
+        while(numimg.size()>8)
+            numimg.remove(0,1);
+        numimg.append(".png");
+        QFile::remove(numimg);
+        item.image = QDir::currentPath()+"/"+numimg;
 
         m_listItems.append(list[i]);
         p->start(m_mplayer,arglist << list.at(i));
@@ -161,18 +180,12 @@ void MainWindow::fillFiletoListWidget(const QStringList &list)
         if(!p->waitForFinished())
             return ;
          readlist = QString::fromUtf8(p->readAll().constData()).split(QRegExp("(\\r\\n)"),QString::SkipEmptyParts);
-        itemstruct item;
+
         item.isConverted = false;
         item.isStandby = false;
         item.fullpath = list[i];
         item.filename = QFileInfo(list[i]).completeBaseName();
 
-        QString numimg("0000000");
-        numimg.append(QString::number(i));
-        while(numimg.size()>8)
-            numimg.remove(0,1);
-        numimg.append(".png");
-        item.image = QDir::currentPath()+"/"+numimg;
 
 //        foreach(const QString &line,readlist)
 //        {
@@ -290,7 +303,8 @@ void MainWindow::slot_ConvertAll()
     {
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
         iw->slot_MouseOnConvert();
-//        while(!proc->waitForFinished(1000));
+        while(!iw->isFinished())
+            QApplication::processEvents();
     }
     SystemSettings *s = new SystemSettings;
     if(s->isConvertFinishedAutoOpen())

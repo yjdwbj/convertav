@@ -12,6 +12,7 @@ typedef struct {
     bool isConverted;
     bool isStandby;
     bool isSingleConvert;
+    bool isCancelConvert;
 } itemstruct;
 
 

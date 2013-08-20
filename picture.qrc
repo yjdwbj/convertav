@@ -46,5 +46,6 @@
         <file>image/cancel.png</file>
         <file>image/pen.png</file>
         <file>image/sure.png</file>
+        <file>image/bg-sel.png</file>
     </qresource>
 </RCC>

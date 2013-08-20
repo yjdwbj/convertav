@@ -8,8 +8,8 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
 //      lab_audio(new QLabel),
 //      lab_videoinfo(new QLabel),
       lab_view(new QLabel("test")),
-      m_mencoder(qApp->applicationDirPath() + ("/mencoder.exe"))
-//      lab_time(new QLabel)
+      m_mencoder(qApp->applicationDirPath() + ("/mencoder.exe")),
+      _state(Stopped)
 {
      m_item = item;
      m_item.isSingleConvert = false;
@@ -224,6 +224,8 @@ void ItemView::removeItemLayout(QLayoutItem *p)
 
 void ItemView::slot_MouseOnConvert()
 {
+    if(m_item.isCancelConvert)
+        return;
     if(!m_item.isStandby)
     {
         removeItemLayout(main_layout->itemAtPosition(1,1));
@@ -256,10 +258,10 @@ void ItemView::slot_MouseOnConvert()
             << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
     }
 
+    _state = Converting;
     m_Process->start(m_mencoder,arg);
-//    while(m_Process->waitForFinished(1000));
-    while(!m_Process->waitForFinished(1000))
-         QCoreApplication::processEvents();
+//    while(!m_Process->waitForFinished(500))
+//         QCoreApplication::processEvents();
 
 }
 
@@ -267,12 +269,15 @@ void ItemView::slot_ConvertingStandardOutput()
 {
     QByteArray ba(m_Process->readLine());
 
+    if(_state == Stopped)
+        return;
     if(ba.startsWith("Pos:"))
     {
        ba = ba.split('\r').at(0);
        ba = ba.split('(').at(1);
        ba = ba.split('%').at(0);
        QProgressBar *p = this->findChild<QProgressBar*>("pgbar");
+       if(p)
        p->setValue(ba.toInt());
     }
 }
@@ -298,6 +303,7 @@ void ItemView::slot_ConvertToStandby()
     convert_lay->addWidget(btn_stop);
     main_layout->addLayout(convert_lay,1,1);
     m_item.isStandby = true;
+    m_item.isCancelConvert = false;
 }
 
 
@@ -305,28 +311,41 @@ void ItemView::slot_ConvertToStandby()
 
 void ItemView::slot_ConvertFinished(int ret)
 {
-//    slot_stopConvert();
+
+    _state = Stopped;
     if(m_item.isSingleConvert)
     {
         ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
         if(cfg.AutoOpen)
             QDesktopServices::openUrl(QUrl(tr("file:///")+cfg.OutputDir));
     }
-    m_item.isConverted = true;
+
 
     m_Process->deleteLater();
-    lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
+    if(m_Process->exitStatus()==QProcess::NormalExit)
+    {
+        m_item.isConverted = true;
+        lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
+    }
+
     removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
-//    removeItemLayout(main_layout->itemAtPosition(1,1));
-//    main_layout->addLayout(CreateItemInfoLayout(),1,1);
 
 }
 
 void ItemView::slot_stopConvert()
 {
+    if(getState() == Stopped)
+    {
+        m_item.isCancelConvert = true;
+        removeItemLayout(main_layout->itemAtPosition(1,1));
+        main_layout->addLayout(CreateItemInfoLayout(),1,1);
+        return ;
+    }
     m_Process->kill();
     m_Process->deleteLater();
+    _state = Stopped;
+
     removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateItemInfoLayout(),1,1);
 }

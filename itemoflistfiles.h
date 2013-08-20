@@ -23,6 +23,7 @@ class ItemView: public QTabWidget
 {
     Q_OBJECT
 public:
+    enum State { Stopped = 0, Converting = 1 };
     explicit ItemView(itemstruct &item,const ToolBoxSettings *tbs, QWidget *parent = 0);
     ~ItemView();
 
@@ -30,6 +31,8 @@ public:
     QPushButton* btn_delself;
 
     QProcess *m_Process;
+    State getState()const {return _state;}
+    bool isFinished() {return _state == Stopped;}
 
 public slots:
     void slot_destoryMySelf();
@@ -50,6 +53,7 @@ private slots:
 
 
 private:
+    State _state;
     QGridLayout* main_layout;
 
 //    QLabel *lab_audio;

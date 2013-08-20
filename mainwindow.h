@@ -54,6 +54,9 @@ private:
     QList<itemstruct> m_listitemstruct;
     QStringList m_listItems;
     bool m_AfterConvertAutoOpen;
+    QPalette m_palette;
+    QBrush m_brush;
+    QString m_LastPath;
 
     ConvertCfg m_ConvertCfg;
 
