@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     toolboxsettings.cpp \
     previewplay.cpp \
     myslider.cpp \
-    timeslider.cpp
+    timeslider.cpp \
+    mylistwidget.cpp
 
 HEADERS  += mainwindow.h \
     systemsettings.h \
@@ -28,7 +29,8 @@ HEADERS  += mainwindow.h \
     previewplay.h \
     global.h \
     myslider.h \
-    timeslider.h
+    timeslider.h \
+    mylistwidget.h
 
 FORMS    += mainwindow.ui
 RC_FILE += icon.rc

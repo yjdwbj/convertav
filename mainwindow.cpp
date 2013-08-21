@@ -11,7 +11,9 @@
 #include <QPalette>
 
 
-const char *version=" v1.01";
+static const char *version=" v1.02";
+
+static const char *support_format[] ={"avi","mp4","rm","mkv","wmv","mov","3gp","mpeg","dat","end"};
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -20,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     btn_OpenFile(new QPushButton(QStringLiteral("添加视频"))),
     btn_ConvertAll(new QPushButton()),
     btn_Settings(new QPushButton()),
-    lwt_ConverFiles(new QListWidget),
+    lwt_ConverFiles(new MyListWidget),
     m_AppPath(qApp->applicationDirPath()),
     m_mplayer(m_AppPath+ ("/mplayer.exe")),
     m_mencoder(m_AppPath + ("/mencoder.exe")),
@@ -37,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QPixmap pixmap("::/lcy/image/bg-sel.png");
     m_brush.setTexture(pixmap);
     m_palette.setBrush(backgroundRole(), QBrush(pixmap));
+    this->setStyleSheet("QListWidget::item::selected{"
+                        "background-color: beige;}");
 
 
 
@@ -62,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     connect(lwt_ConverFiles,SIGNAL(itemClicked(QListWidgetItem*)),SLOT(slot_ClickToSetCurrentRow(QListWidgetItem*)));
-
+    connect(lwt_ConverFiles,SIGNAL(hasUrls(QList<QUrl>)),SLOT(slot_GotUrls(QList<QUrl>)));
     //    lwt_ConverFiles->setAlternatingRowColors(true);
     lwt_ConverFiles->setResizeMode(QListView::Fixed);
     lwt_ConverFiles->setAcceptDrops(true);
@@ -158,7 +162,18 @@ void MainWindow::slot_openfiles()
 
     if(m_LastPath.isEmpty())
     m_LastPath = QFileInfo(m_configfile).absolutePath();
-    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),m_LastPath,tr("支持的格式 (*.avi *.mp4 *.rm *.rmvb *.mkv *.wmv *.mov)"));
+    QString s_format("支持的格式 (");
+    int i =0;
+    while(QString(QByteArray(support_format[i])).compare("end"))
+    {
+        s_format.append("*.");
+        s_format.append(support_format[i]);
+        s_format.append(" ");
+        i++;
+    }
+    s_format.replace(s_format.length(),1,")");
+    QStringList listfiles =  QFileDialog::getOpenFileNames(this,tr("选择文件"),m_LastPath,
+                                                           s_format);
 
     if(listfiles.count() >0)
     {
@@ -180,6 +195,31 @@ void MainWindow::slot_openfiles()
     if(listfiles.isEmpty())
         return ;
     fillFiletoListWidget(listfiles);
+}
+
+
+void MainWindow::slot_GotUrls(QList<QUrl> urls)
+{
+    QStringList listfiles;
+    int i;
+    foreach(QUrl url,urls)
+    {
+        QString l = url.toString().remove(0,8); // remove file:///
+        QString ext = QFileInfo(l).suffix();
+        i = 0;
+
+        while(QString(support_format[i]).compare("end"))
+        {
+            if(!ext.compare(support_format[i],Qt::CaseInsensitive))
+            {
+                listfiles.append(l);
+                break;
+            }
+            i++;
+        }
+    }
+    if(!listfiles.isEmpty())
+        fillFiletoListWidget(listfiles);
 }
 
 void MainWindow::fillFiletoListWidget(const QStringList &list)

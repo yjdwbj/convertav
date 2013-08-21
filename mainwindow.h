@@ -14,6 +14,7 @@
 #include "previewplay.h"
 #include "toolboxsettings.h"
 #include "global.h"
+#include "mylistwidget.h"
 #include <QMessageBox>
 
 
@@ -34,6 +35,7 @@ private slots:
     void slot_ConvertAll();
     void slot_Settings();
     void slot_removeItem(QWidget *);
+    void slot_GotUrls(QList<QUrl>);
 
     ConvertCfg getConvertCfg() const {return m_ConvertCfg;}
 private:
@@ -42,7 +44,7 @@ private:
     QPushButton* btn_OpenFile;
     QPushButton* btn_ConvertAll;
     QPushButton* btn_Settings;
-    QListWidget* lwt_ConverFiles;
+    MyListWidget* lwt_ConverFiles;
     PreViewPlay *m_PreViewPlay;
     QProcess *m_PrePlayProcess;
     ToolBoxSettings *m_ToolBoxSettings;
