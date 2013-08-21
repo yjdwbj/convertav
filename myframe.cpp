@@ -97,9 +97,9 @@ void MyFrame::HasClickBotton()
             ts << m_LastPath;
             fd.close();
         }
-
+        emit GotStringList(listfiles);
     }
-    emit GotStringList(listfiles);
+
 
 }
 

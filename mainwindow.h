@@ -67,6 +67,7 @@ private:
 
 
     void ReadOrCreateCfg();
+    void SwitchMainListToGuide();
     void fillFiletoListWidget(const QStringList &list);
 };
 

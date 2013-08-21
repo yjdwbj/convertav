@@ -11,7 +11,7 @@
 #include <QPalette>
 
 
-static const char *version=" v1.02";
+static const char *version=" v1.04";
 
 
 
@@ -211,7 +211,8 @@ void MainWindow::slot_openfiles()
 
     if(listfiles.isEmpty())
         return ;
-    fillFiletoListWidget(listfiles);
+    slot_GotFileListFromGuide(listfiles);
+
 }
 
 
@@ -349,14 +350,19 @@ void MainWindow::slot_removeItem(QWidget *p)
     }
     if(!lwt_ConverFiles->count())
     {
-        layout_main->removeWidget(lwt_ConverFiles);
-        lwt_ConverFiles->hide();
-        layout_main->addWidget(m_guide,1,0,2,2);
-        m_guide->setVisible(true);
+        SwitchMainListToGuide();
     }
 
 }
 
+
+void MainWindow::SwitchMainListToGuide()
+{
+    layout_main->removeWidget(lwt_ConverFiles);
+    lwt_ConverFiles->hide();
+    layout_main->addWidget(m_guide,1,0,2,2);
+    m_guide->setVisible(true);
+}
 
 
 
