@@ -13,7 +13,6 @@
 
 static const char *version=" v1.02";
 
-static const char *support_format[] ={"avi","mp4","rm","mkv","wmv","mov","3gp","mpeg","dat","end"};
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -63,14 +62,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     lwt_ConverFiles->setFixedWidth(600);
+    lwt_ConverFiles->setObjectName("mainList");
 
 
     connect(lwt_ConverFiles,SIGNAL(itemClicked(QListWidgetItem*)),SLOT(slot_ClickToSetCurrentRow(QListWidgetItem*)));
     connect(lwt_ConverFiles,SIGNAL(hasUrls(QList<QUrl>)),SLOT(slot_GotUrls(QList<QUrl>)));
     //    lwt_ConverFiles->setAlternatingRowColors(true);
     lwt_ConverFiles->setResizeMode(QListView::Fixed);
-    lwt_ConverFiles->setAcceptDrops(true);
-    lwt_ConverFiles->setToolTip("请拖入需要转换的视频文件");
+
 
     btn_ConvertAll->setFixedSize(201,56);
     btn_ConvertAll->setIconSize(btn_ConvertAll->size());
@@ -98,13 +97,29 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(btn_Settings,SIGNAL(clicked()),SLOT(slot_Settings()));
 
 
-    layout_main->addWidget(lwt_ConverFiles,1,0,2,2);
+//    layout_main->addWidget(lwt_ConverFiles,1,0,2,2);
+    m_guide = new MyFrame;
+    connect(m_guide,SIGNAL(GotStringList(QStringList)),SLOT(slot_GotFileListFromGuide(QStringList)));
+    m_guide->setFixedWidth(600);
+    layout_main->addWidget(m_guide,1,0,2,2);
     layout_main->addWidget(m_PreViewPlay,1,3);
     layout_main->addWidget(m_ToolBoxSettings,2,3);
 
     QWidget *w = new QWidget(parent);
     w->setLayout(layout_main);
     setCentralWidget(w);
+}
+
+void MainWindow::slot_GotFileListFromGuide(QStringList list)
+{
+
+    layout_main->removeWidget(m_guide);
+//    delete m_guide;
+//    m_guide = 0;
+    m_guide->hide();
+    layout_main->addWidget(lwt_ConverFiles,1,0,2,2);
+    lwt_ConverFiles->setVisible(true);
+    fillFiletoListWidget(list);
 }
 
 void MainWindow::slot_ClickToSetCurrentRow(QListWidgetItem *p)
@@ -146,6 +161,8 @@ void MainWindow::ReadOrCreateCfg()
     if(!QFileInfo(outputdir).exists())
        dir.mkpath(outputdir);
 }
+
+
 
 void MainWindow::slot_openfiles()
 {
@@ -316,19 +333,26 @@ void MainWindow::slot_removeItem(QWidget *p)
             m_listItems.removeAt(i);
             m_listitemstruct.removeAt(i);
             m_PreViewPlay->slot_Stop_Clicked();
-//            QMouseEvent qm2(QEvent::MouseButtonPress, m_PreViewPlay->btn_stop->pos(), Qt::LeftButton , Qt::LeftButton,    Qt::NoModifier);
-//            QApplication::sendEvent(m_PreViewPlay->btn_stop,
-//                                    new QMouseEvent(QEvent::MouseButtonPress,
-//                                                    m_PreViewPlay->btn_stop->pos(),
-//                                                    Qt::LeftButton ,
-//                                                    Qt::LeftButton,Qt::NoModifier));
-//            QApplication::sendEvent(m_PreViewPlay->btn_stop,
-//                                    new QMouseEvent(QEvent::MouseButtonRelease,
-//                                                    m_PreViewPlay->btn_stop->pos(),
-//                                                    Qt::LeftButton ,
-//                                                    Qt::LeftButton,Qt::NoModifier));
+            //            QMouseEvent qm2(QEvent::MouseButtonPress, m_PreViewPlay->btn_stop->pos(), Qt::LeftButton , Qt::LeftButton,    Qt::NoModifier);
+            //            QApplication::sendEvent(m_PreViewPlay->btn_stop,
+            //                                    new QMouseEvent(QEvent::MouseButtonPress,
+            //                                                    m_PreViewPlay->btn_stop->pos(),
+            //                                                    Qt::LeftButton ,
+            //                                                    Qt::LeftButton,Qt::NoModifier));
+            //            QApplication::sendEvent(m_PreViewPlay->btn_stop,
+            //                                    new QMouseEvent(QEvent::MouseButtonRelease,
+            //                                                    m_PreViewPlay->btn_stop->pos(),
+            //                                                    Qt::LeftButton ,
+            //                                                    Qt::LeftButton,Qt::NoModifier));
             break;
         }
+    }
+    if(!lwt_ConverFiles->count())
+    {
+        layout_main->removeWidget(lwt_ConverFiles);
+        lwt_ConverFiles->hide();
+        layout_main->addWidget(m_guide,1,0,2,2);
+        m_guide->setVisible(true);
     }
 
 }

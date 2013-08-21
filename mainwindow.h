@@ -15,6 +15,7 @@
 #include "toolboxsettings.h"
 #include "global.h"
 #include "mylistwidget.h"
+#include "myframe.h"
 #include <QMessageBox>
 
 
@@ -36,6 +37,7 @@ private slots:
     void slot_Settings();
     void slot_removeItem(QWidget *);
     void slot_GotUrls(QList<QUrl>);
+    void slot_GotFileListFromGuide(QStringList);
 
     ConvertCfg getConvertCfg() const {return m_ConvertCfg;}
 private:
@@ -59,8 +61,10 @@ private:
     QPalette m_palette;
     QBrush m_brush;
     QString m_LastPath;
+    MyFrame* m_guide;
 
     ConvertCfg m_ConvertCfg;
+
 
     void ReadOrCreateCfg();
     void fillFiletoListWidget(const QStringList &list);

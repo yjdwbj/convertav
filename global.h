@@ -35,6 +35,7 @@ typedef struct {
 
 } ConvertCfg;
 
+static const char *support_format[] ={"avi","mp4","rm","mkv","wmv","mov","3gp","mpeg","dat","end"};
 
 
 #endif // GLOBAL_H

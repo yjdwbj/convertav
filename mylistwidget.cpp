@@ -7,7 +7,7 @@ MyListWidget::MyListWidget(QWidget *parent)
     setDragEnabled(true);
     setDragDropMode(QAbstractItemView::InternalMove);
 //    dropHintItem = new QListWidgetItem("拖入文件放这里...",this);
-
+    setToolTip("请拖入需要转换的视频文件");
 
 }
 

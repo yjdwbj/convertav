@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     previewplay.cpp \
     myslider.cpp \
     timeslider.cpp \
-    mylistwidget.cpp
+    mylistwidget.cpp \
+    myframe.cpp
 
 HEADERS  += mainwindow.h \
     systemsettings.h \
@@ -30,7 +31,8 @@ HEADERS  += mainwindow.h \
     global.h \
     myslider.h \
     timeslider.h \
-    mylistwidget.h
+    mylistwidget.h \
+    myframe.h
 
 FORMS    += mainwindow.ui
 RC_FILE += icon.rc
