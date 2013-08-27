@@ -165,8 +165,10 @@ void ToolBoxSettings::setTimeAndNameToTable(const QPair<QString,QString> &pair)
 {
 
      twi_time->setText(pair.first.section(".",0,0));
+     tedit_start->setTime(QTime(0,0,0,0));
      tedit_end->setTime(QTime::fromString(twi_time->text(),"HH:mm:ss"));
      edt_fname->setText(pair.second);
+     updateStructConvertCfg();
 }
 
 void ToolBoxSettings::setVideoSettings()

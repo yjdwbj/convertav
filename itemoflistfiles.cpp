@@ -245,12 +245,12 @@ void ItemView::slot_MouseOnConvert()
 //    mencoder.exe  -of lavf   -oac pcm -ovc lavc -lavcopts  \
 //    acodec=pcm_u8:vcodec=mjpeg:abitrate=96:vbitrate=640:vpass=1:aspect=16/9 -ofps 15 \
 //    -af lavcresample=16000:channels=2  -vf scale -zoom -xy 160 AlanSiegel_2010-low-zh-cn.mp4 -o ppp.avi
-    QProcess *first_p = new QProcess;
+
     QStringList first_arg;
 
     if(!cfg.Endpos.compare("00:00:00"))
     {
-        first_arg << "-ss" << cfg.StartTime
+        first_arg << "-ss" << "00:00:00"
                   << "-oac" << cfg.AEncoder << "-ovc" << "copy" << m_item.fullpath << "-o" << m_item.outputFullPath+".bak";
     }
     else
@@ -258,6 +258,7 @@ void ItemView::slot_MouseOnConvert()
         first_arg << "-ss" << cfg.StartTime << "-endpos" << cfg.Endpos
                   << "-oac" << cfg.AEncoder << "-ovc"<<"copy" << m_item.fullpath <<  "-o" << m_item.outputFullPath+".bak";
     }
+    QProcess *first_p = new QProcess;
     first_p->start(m_mencoder,first_arg);
     while(!first_p->waitForFinished(500))
         QApplication::processEvents();

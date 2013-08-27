@@ -392,6 +392,10 @@ void MainWindow::slot_ConvertAll()
     if(lwt_ConverFiles->count()==0)
         return;
 
+    ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
+    if(!QFileInfo(cfg.OutputDir).exists())
+        QDir(QDir::root()).mkpath(cfg.OutputDir);
+
     for(int i = 0 ; i < lwt_ConverFiles->count();i++)
     {
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
@@ -400,6 +404,9 @@ void MainWindow::slot_ConvertAll()
 
     for(int i = 0 ; i < lwt_ConverFiles->count();i++)
     {
+//        lwt_ConverFiles->setCurrentRow(i);
+        itemstruct t = m_listitemstruct.at(i);
+        m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(t.file_time,t.filename));
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
         iw->slot_MouseOnConvert();
         while(!iw->isFinished())
