@@ -15,9 +15,11 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
       cbbox_abitrate(new QComboBox),
       cbbox_channel(new QComboBox),
       cbbox_samplerate(new QComboBox),
+      cbbox_scale(new QComboBox),
       m_sys(new SystemSettings),
-      edt_high(new QLineEdit),
-      edt_width(new QLineEdit),
+//      edt_high(new QLineEdit),
+//      edt_width(new QLineEdit),
+
       twi_time(new QTableWidgetItem("00:00:00")),
       tedit_start(new QTimeEdit()),
       tedit_end(new   QTimeEdit),
@@ -25,17 +27,22 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
 {
     QGroupBox *main_gbox = new QGroupBox();
     main_ToolBox = new QToolBox(main_gbox);
-    m_listComboBox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
-                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
-                         << cbbox_samplerate;
+//    m_listComboBox  << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
+//                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
+//                         << cbbox_samplerate << cbbox_scale;
+    m_listComboBox = m_sys->getAllComboBox();
     QStringList tmplist = m_sys->getlistAllItems();
-    for(int i = 0 ; i < tmplist.count();i++)
+    int i = 0;
+    for(i = 0 ; i < tmplist.count();i++)
     {
         m_listComboBox[i]->addItems(tmplist[i].split(','));
         connect(m_listComboBox[i],SIGNAL(currentTextChanged(QString)),
                 SLOT(SomeValueHasChanged(QString)));
     }
-    setFilmHW(m_sys->getFilmHW());
+    m_listComboBox[i]->addItems(m_sys->GetSupportedScale());
+    connect(m_listComboBox[i],SIGNAL(currentTextChanged(QString)),
+            SLOT(SomeValueHasChanged(QString)));
+  //  setFilmHW(m_sys->getFilmHW());
 
     setBaseSettings();
     setAudioSettings();
@@ -59,10 +66,11 @@ void ToolBoxSettings::SomeValueHasChanged(QString)
     updateStructConvertCfg();
 }
 
-void ToolBoxSettings::setFilmHW(QPair<QString, QString> pair)
+void ToolBoxSettings::setFilmHW(const QString &s)
 {
-    edt_high->setText(pair.first);
-    edt_width->setText(pair.second);
+//    edt_high->setText(pair.first);
+//    edt_width->setText(pair.second);
+    cbbox_scale->setCurrentText(s);
 }
 
 void ToolBoxSettings::setBaseSettings()
@@ -71,19 +79,20 @@ void ToolBoxSettings::setBaseSettings()
     edt_fname->setReadOnly(true);
     QLabel *lab_vsize = new QLabel("视频大小");
     QHBoxLayout *lay_hw = new QHBoxLayout;
-    QLabel *lab_high = new QLabel("高:");
 
-    edt_high->setInputMask("0000");
-    edt_high->setFixedWidth(40);
-    connect(edt_high,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
-    QLabel *Lab_width = new QLabel("宽:");
-    edt_width->setInputMask("0000");
-    edt_width->setFixedWidth(40);
-    connect(edt_width,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
-    lay_hw->addWidget(lab_high);
-    lay_hw->addWidget(edt_high);
-    lay_hw->addWidget(Lab_width);
-    lay_hw->addWidget(edt_width);
+//    QLabel *lab_high = new QLabel("高:");
+
+//    edt_high->setInputMask("0000");
+//    edt_high->setFixedWidth(40);
+//    connect(edt_high,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
+//    QLabel *Lab_width = new QLabel("宽:");
+//    edt_width->setInputMask("0000");
+//    edt_width->setFixedWidth(40);
+//    connect(edt_width,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
+//    lay_hw->addWidget(lab_high);
+//    lay_hw->addWidget(edt_high);
+//    lay_hw->addWidget(Lab_width);
+    lay_hw->addWidget(cbbox_scale);
 
 //    lay_hw->addStretch();
     QLabel *lab_quality = new QLabel("质量");
@@ -196,7 +205,7 @@ void ToolBoxSettings::setVideoSettings()
 
 void ToolBoxSettings::updateToolBox(QStringList list)
 {
-    setFilmHW(qMakePair(list.at(0),list.at(1)));
+    setFilmHW(list.at(0));
     for(int i = 2;i < list.count() ;i++)
     {
         m_listComboBox[i-2]->setCurrentText(list[i]);
@@ -229,8 +238,9 @@ void ToolBoxSettings::setAudioSettings()
 void ToolBoxSettings::updateStructConvertCfg()
 {
     m_ConvertCfg.OutputDir = m_sys->getOutputDir();
-    m_ConvertCfg.Height = edt_high->text();
-    m_ConvertCfg.Width = edt_width->text();
+//    m_ConvertCfg.Height = edt_high->text();
+//    m_ConvertCfg.Width = edt_width->text();
+    m_ConvertCfg.VScale = cbbox_scale->currentText().section(" ",1,1);
     m_ConvertCfg.ABitRate = cbbox_abitrate->currentText();
     m_ConvertCfg.AEncoder = cbbox_aencoder->currentText();
     m_ConvertCfg.Channel = cbbox_channel->currentText();

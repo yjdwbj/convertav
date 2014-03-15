@@ -29,7 +29,10 @@ public:
 
     QPushButton* btn_convert;
     QPushButton* btn_delself;
-
+    QString m_AppPath ;
+    QString m_ffmpeg;
+    QString m_mplayer;
+    QString m_mencoder;
     QProcess *m_Process;
     State getState()const {return _state;}
     bool isFinished() {return _state == Stopped;}
@@ -39,6 +42,7 @@ public slots:
     void slot_stopConvert();
     void slot_ConvertToStandby();
     void slot_MouseOnConvert();
+    void slot_MouseOnConvertFFMPEG();  // 改用ffmpeg.exe 转换.
     void slot_CancelReNameFile();
 
 private slots:
@@ -66,7 +70,8 @@ private:
 
     itemstruct m_item;
     const ToolBoxSettings *m_ToolBoxSettings;
-    QString m_mencoder;
+
+
 
     QPushButton* btn_rename;
     QPushButton* btn_rename_accpet;

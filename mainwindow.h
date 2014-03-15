@@ -11,6 +11,7 @@
 #include <QProcess>
 #include <QTime>
 #include <QPair>
+#include "itemoflistfiles.h"
 #include "previewplay.h"
 #include "toolboxsettings.h"
 #include "global.h"
@@ -38,10 +39,12 @@ private slots:
     void slot_removeItem(QWidget *);
     void slot_GotUrls(QList<QUrl>);
     void slot_GotFileListFromGuide(QStringList);
+    void slot_ReadOutputFromScreen();
 
     ConvertCfg getConvertCfg() const {return m_ConvertCfg;}
 private:
     void FilesOrDirNoExists(const QString &in);
+//    friend class ItemView;
     QGridLayout* layout_main;
     QPushButton* btn_OpenFile;
     QPushButton* btn_ConvertAll;
@@ -49,11 +52,14 @@ private:
     MyListWidget* lwt_ConverFiles;
     PreViewPlay *m_PreViewPlay;
     QProcess *m_PrePlayProcess;
+    QProcess *m_screenProcess;
+    QString m_ffmpeg_info;
     ToolBoxSettings *m_ToolBoxSettings;
     QString m_configfile;
-    QString m_AppPath;
     QString m_mplayer;
+    QString m_AppPath;
     QString m_mencoder;
+    QString m_ffmpeg;
     QList<QListWidgetItem*> m_listwidgetitem;
     QList<itemstruct> m_listitemstruct;
     QStringList m_listItems;
@@ -69,6 +75,8 @@ private:
     void ReadOrCreateCfg();
     void SwitchMainListToGuide();
     void fillFiletoListWidget(const QStringList &list);
+    QStringList FFMPEGScreenshotArg(const QString &file);
+    void FormatVideoInfo(const QStringList &data,itemstruct &result);
 };
 
 #endif // MAINWINDOW_H

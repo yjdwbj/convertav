@@ -1,17 +1,19 @@
 #include "mainwindow.h"
+#include "global.h"
 #include "ui_mainwindow.h"
-#include "itemoflistfiles.h"
 #include "toolboxsettings.h"
 #include <QToolBar>
 #include <QTabWidget>
-#include "global.h"
 #include "systemsettings.h"
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPalette>
+#include <QDebug>
+#include <QTextStream>
 
 
-static const char *version=" v1.04";
+static const char *version=" v1.05";
+
 
 
 
@@ -22,17 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
     btn_ConvertAll(new QPushButton()),
     btn_Settings(new QPushButton()),
     lwt_ConverFiles(new MyListWidget),
-    m_AppPath(qApp->applicationDirPath()),
-    m_mplayer(m_AppPath+ ("/mplayer.exe")),
-    m_mencoder(m_AppPath + ("/mencoder.exe")),
     m_PreViewPlay(new PreViewPlay),
     m_PrePlayProcess(new QProcess),
     m_ToolBoxSettings(new ToolBoxSettings),
     m_LastPath("")
 {
-//    m_AppPath = qApp->applicationDirPath();
-//    m_mplayer = m_AppPath + ("/mplayer.exe");
-//    m_mencoder = m_AppPath +("/mencoder.exe");
+    m_AppPath = qApp->applicationDirPath();
+    m_mplayer=m_AppPath+("/mplayer.exe");
+    m_mencoder=m_AppPath+("/mencoder.exe");
+    m_ffmpeg=m_AppPath+("/ffmpeg.exe");
     setWindowTitle(QString("视频转换工具")+version);
 
     QPixmap pixmap("::/lcy/image/bg-sel.png");
@@ -240,77 +240,104 @@ void MainWindow::slot_GotUrls(QList<QUrl> urls)
         fillFiletoListWidget(listfiles);
 }
 
+QStringList MainWindow::FFMPEGScreenshotArg(const QString &file)
+{
+    QFileInfo finfo(file);
+    QString png = finfo.baseName().append(".png");
+    QStringList arg = QString("-ss 5 -y -f image2 -vframes:v 1 -v verbose").split(QRegExp("(\\s)+"));
+    arg.prepend(file);
+    arg.prepend("-i");
+    arg.append(png);
+    return arg;
+}
+
+
+void MainWindow::FormatVideoInfo(const QStringList &data,itemstruct &item)
+{
+    QTime nt;
+    nt.setHMS(0,0,0);
+    for(int nn = 0;nn < data.count();nn++)
+    {
+
+        if(data[nn].contains("Stream #0:"))
+        {
+            if(data[nn].contains("Audio:"))
+            {
+                item.audio_info = data[nn].section("Audio:",1,1);
+            }
+                else
+            {
+                item.video_info = data[nn].section("Video:",1,1);
+            }
+
+        }
+        else if(data[nn].contains("Duration:"))
+        {
+           item.file_time = nt.toString(data[nn].section(QRegExp(":|,"),1,1));
+        }
+    }
+}
+
+void MainWindow::slot_ReadOutputFromScreen()
+{
+     m_ffmpeg_info.append(m_screenProcess->readAllStandardError());
+}
+
+
 void MainWindow::fillFiletoListWidget(const QStringList &list)
 {
 
 
     QStringList arglist = QString("-ss 10 -vo png -ao null -identify  -frames 1").split(QRegExp("(\\s)+"));
-    QProcess *p = new QProcess;
+
+
     QTime pt(0,0,0);
     QTime nt;
+
     QStringList readlist;
+    m_screenProcess = new QProcess;
+    connect(m_screenProcess,SIGNAL(readyReadStandardError()),SLOT(slot_ReadOutputFromScreen()));
+    connect(m_screenProcess,SIGNAL(readyReadStandardOutput()),SLOT(slot_ReadOutputFromScreen()));
     for(int i = 0; i < list.count() ; i++)
     {
         itemstruct item;
-        QString numimg("0000000");
-        numimg.append(QString::number(i));
-        while(numimg.size()>8)
-            numimg.remove(0,1);
-        numimg.append(".png");
-        QFile::remove(numimg);
-        item.image = QDir::currentPath()+"/"+numimg;
-
+        arglist = FFMPEGScreenshotArg(list[i]);
+        item.image = QDir::currentPath()+"/"+arglist.last();
         m_listItems.append(list[i]);
-        p->start(m_mplayer,arglist << list.at(i));
-        if (!p->waitForStarted())
+        m_screenProcess->start(m_ffmpeg,arglist,QIODevice::ReadOnly);
+        if (!m_screenProcess->waitForStarted())
             return ;
-        if(!p->waitForFinished())
+        if(!m_screenProcess->waitForFinished())
             return ;
-         readlist = QString::fromUtf8(p->readAll().constData()).split(QRegExp("(\\r\\n)"),QString::SkipEmptyParts);
 
         item.isConverted = false;
         item.isStandby = false;
         item.fullpath = list[i];
         item.filename = QFileInfo(list[i]).completeBaseName();
 
-
-//        foreach(const QString &line,readlist)
+        FormatVideoInfo(m_ffmpeg_info.split(QRegExp("(\\r\\n)"),QString::SkipEmptyParts),item);
+//        for(int nn = 0;nn < readlist.count();nn++)
 //        {
-//            if(line.startsWith("VIDEO:"))
-//                item.video_info = line.section(":",1);
-//            else if(line.startsWith("AUDIO:"))
-//                item.audio_info = line.section(":",1);
-//            else if(line.startsWith("ID_LENGTH="))
+//            if(readlist[nn].startsWith("VIDEO:"))
+//            {
+//                item.video_info=readlist[nn].section(":",1);
+//            }
+//            else if(readlist[nn].startsWith("AUDIO:"))
+//            {
+//                item.audio_info = readlist[nn].section(":",1);
+//            }
+//            else if(readlist[nn].startsWith("ID_LENGTH="))
 //            {
 //                pt.setHMS(0,0,0);
 //                nt.setHMS(0,0,0);
-//                QString t = line.section("=",1);
+//                QString t = readlist[nn].section("=",1);
 //                nt = pt.addMSecs(qint32(t.toFloat()*1000));
 //                item.file_time = nt.toString(tr("hh:mm:ss.zzz"));
 //            }
 //        }
-
-        for(int i = 0;i < readlist.count();i++)
-        {
-            if(readlist[i].startsWith("VIDEO:"))
-            {
-                item.video_info=readlist[i].section(":",1);
-            }
-            else if(readlist[i].startsWith("AUDIO:"))
-            {
-                item.audio_info = readlist[i].section(":",1);
-            }
-            else if(readlist[i].startsWith("ID_LENGTH="))
-            {
-                pt.setHMS(0,0,0);
-                nt.setHMS(0,0,0);
-                QString t = readlist[i].section("=",1);
-                nt = pt.addMSecs(qint32(t.toFloat()*1000));
-                item.file_time = nt.toString(tr("hh:mm:ss.zzz"));
-            }
-        }
         if(!i)
         m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(item.file_time,item.filename));
+
         readlist.clear();
         QListWidgetItem *lwt2 = new QListWidgetItem("",lwt_ConverFiles);
         lwt2->setSizeHint(QSize(500,100));

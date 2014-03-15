@@ -10,7 +10,7 @@ const QString EncoderCount("1,2");
 const QString SampleRate("8000,22050,24000,32000,44100,48000");
 const QString Channel("1,2");
 
-const QStringList m_listkey(QStringList() << "Height=" << "Width=" << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
+const QStringList m_listkey(QStringList() << "Scale" << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
           << "VEncoder=" << "ABitrate=" << "AEncoder=" << "Channel=" << "Samplerate=");
 
 
@@ -61,22 +61,24 @@ SystemSettings::SystemSettings(QWidget *parent)
 
     QHBoxLayout *hw_layout = new QHBoxLayout();
     QGridLayout *video_lay = new QGridLayout(box_video);
-    QLabel *lab_height = new QLabel("高:",box_video);
-    lab_height->setFixedWidth(24);
-    QLabel *lab_width = new QLabel("宽:",box_video);
-    lab_width->setFixedWidth(24);
+
+    QLabel *lab_videoSize = new QLabel("视频尺寸:",box_video);
+//    QLabel *lab_height = new QLabel("高:",box_video);
+//    lab_height->setFixedWidth(24);
+//    QLabel *lab_width = new QLabel("宽:",box_video);
+//    lab_width->setFixedWidth(24);
 
 
-    edt_height = new QLineEdit(box_video);
-    edt_height->setFixedWidth(50);
-    edt_width = new QLineEdit(box_video);
-    edt_width->setFixedWidth(50);
-
-//    hw_layout->setSpacing(1);
-    hw_layout->addWidget(lab_height,Qt::AlignCenter);
-    hw_layout->addWidget(edt_height);
-    hw_layout->addWidget(lab_width,Qt::AlignCenter);
-    hw_layout->addWidget(edt_width);
+//    edt_height = new QLineEdit(box_video);
+//    edt_height->setFixedWidth(50);
+//    edt_width = new QLineEdit(box_video);
+//    edt_width->setFixedWidth(50);
+    cbbox_scale = new QComboBox(box_video);
+    hw_layout->setSpacing(1);
+    hw_layout->addWidget(lab_videoSize,Qt::AlignCenter);
+    hw_layout->addWidget(cbbox_scale);
+//    hw_layout->addWidget(lab_width,Qt::AlignCenter);
+//    hw_layout->addWidget(edt_width);
 
 
     QLabel* lab_vencoder = new QLabel("编码:",box_video);
@@ -134,7 +136,7 @@ SystemSettings::SystemSettings(QWidget *parent)
 
 
     m_listcbbox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate << cbox_vencoder
-                  << cbbox_abitrate << cbbox_aencoder << cbbox_channel << cbbox_samplerate;
+                  << cbbox_abitrate << cbbox_aencoder << cbbox_channel << cbbox_samplerate << cbbox_scale;
 
 
 
@@ -167,6 +169,21 @@ SystemSettings::SystemSettings(QWidget *parent)
     readCfgToFile(QDir::homePath()+"/Application Data/ConvertToMJPEG/convert_to_mjeg.ini");
 }
 
+QStringList SystemSettings::GetSupportedScale()
+{
+    int len = sizeof(support_scale)/sizeof(VideoSize);
+    QStringList list;
+    QString t;
+    for(int i =0 ;i < len ;i++)
+    {
+        t = support_scale[i].name ;
+        t.append(" ");
+        t.append(support_scale[i].size) ;
+        list.append( t);
+    }
+    return list;
+}
+
 
 void SystemSettings::FilesOrDirNoExists(const QString &in)
 {
@@ -190,11 +207,13 @@ void SystemSettings::InitDialog()
 
 
 
-    setVideoSize(128,160);
-    for(int i = 0 ; i < m_listcbbox.count();i++)
+  //  setVideoSize(128,160);
+    int i =0;
+    for( i = 0 ; i < m_listAllItems.count();i++)
     {
         m_listcbbox[i]->addItems(m_listAllItems[i].split(","));
     }
+    m_listcbbox[i]->addItems(GetSupportedScale());
 
 //    cbox_enoderCount->addItems(EncoderCount);
 //    cbox_frameRate->addItems(FrameRate);
@@ -211,7 +230,7 @@ void SystemSettings::InitDialog()
 void SystemSettings::UpdateCurrentIndexText()
 {
     m_currentIndexText.clear();
-    m_currentIndexText << edt_height->text() << edt_width->text() << cbox_enoderCount->currentText()
+    m_currentIndexText << cbbox_scale->currentText() << cbox_enoderCount->currentText()
     << cbox_frameRate->currentText() << cbox_hwrate->currentText() << cbox_vbitrate->currentText()
     << cbox_vencoder->currentText() << cbbox_abitrate->currentText() << cbbox_aencoder->currentText()
     <<   cbbox_channel->currentText() << cbbox_samplerate->currentText();
@@ -273,8 +292,8 @@ void SystemSettings::readCfgToFile(const QString &fname)
      edt_dir->setText(m_currentIndexText.takeAt(0));
      int v = m_currentIndexText.takeAt(0).toInt();
      cbox_autoopen->setChecked(v == 1 ? true : false);
-     edt_height->setText(m_currentIndexText.takeAt(0));
-     edt_width->setText(m_currentIndexText.takeAt(0));
+//     edt_height->setText(m_currentIndexText.takeAt(0));
+//     edt_width->setText(m_currentIndexText.takeAt(0));
      for(int i = 0; i < m_listcbbox.count();i++)
      {
          m_listcbbox[i]->setCurrentText(m_currentIndexText.at(i));

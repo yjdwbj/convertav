@@ -1,5 +1,9 @@
 #include "itemoflistfiles.h"
 #include <QFrame>
+
+
+
+
 ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent)
     :QTabWidget(parent),
       main_layout(new QGridLayout),
@@ -8,7 +12,9 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
 //      lab_audio(new QLabel),
 //      lab_videoinfo(new QLabel),
       lab_view(new QLabel("test")),
-      m_mencoder(qApp->applicationDirPath() + ("/mencoder.exe")),
+      m_AppPath(qApp->applicationDirPath()),
+      m_mencoder(m_AppPath+ ("/mencoder.exe")),
+      m_ffmpeg(m_AppPath + ("/ffmpeg.exe")),
       _state(Stopped)
 {
      m_item = item;
@@ -65,7 +71,7 @@ QLayout* ItemView::CreateFirstLine()
 //    btn_convert->setIcon(QPixmap(":/lcy/image/converter.png").copy(0,37,25,19));
     btn_convert->setObjectName("btn_convert");
     connect(btn_convert,SIGNAL(pressed()),SLOT(slot_SingleConvert()));
-    connect(this,SIGNAL(parentConvertSignal()),SLOT(slot_MouseOnConvert()));
+    connect(this,SIGNAL(parentConvertSignal()),SLOT(slot_MouseOnConvertFFMPEG()));
     oneline->addWidget(btn_convert);
 
     btn_delself = new QPushButton(QPixmap(":/lcy/image/no.png").copy(0,0,39,19),"");
@@ -226,6 +232,31 @@ void ItemView::removeItemLayout(QLayoutItem *p)
 
 }
 
+void ItemView::slot_MouseOnConvertFFMPEG()
+{
+    if(m_item.isCancelConvert)
+        return;
+    if(!m_item.isStandby)
+    {
+        removeItemLayout(main_layout->itemAtPosition(1,1));
+        main_layout->addLayout(CreateConvertingLayout(),1,1);
+    }
+
+    m_Process = new QProcess;
+    connect(m_Process,SIGNAL(finished(int)),SLOT(slot_ConvertFinished(int)));
+    connect(m_Process,SIGNAL(readyReadStandardOutput()),SLOT(slot_ConvertingStandardOutput()));
+    QStringList arg;
+    ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
+    m_item.outputFullPath = cfg.OutputDir+"/"+m_item.filename+".avi";
+
+    arg << " -c:a " << cfg.AEncoder << "-c:v " << cfg.VEncoder << " -b:a " << cfg.ABitRate << " -b:v "<<
+   cfg.VBitRate << " -pass  " << cfg.EncoderCount << " -aspect " << cfg.HWRatio << " -r " << cfg.Frame << " -ar "
+        << cfg.SampleRate << " -ac "+cfg.Channel << "-s " << cfg.VScale << m_item.fullpath << "-o" << m_item.outputFullPath;
+
+    _state = Converting;
+    m_Process->start(m_ffmpeg,arg);
+}
+
 void ItemView::slot_MouseOnConvert()
 {
     if(m_item.isCancelConvert)
@@ -251,12 +282,12 @@ void ItemView::slot_MouseOnConvert()
     if(!cfg.Endpos.compare("00:00:00"))
     {
         first_arg << "-ss" << "00:00:00"
-                  << "-oac" << cfg.AEncoder << "-ovc" << "copy" << m_item.fullpath << "-o" << m_item.outputFullPath+".bak";
+                  << "-oac" << cfg.AEncoder << "-ovc" << "copy -noskip -vf scale,format=yuy2" << m_item.fullpath << "-o" << m_item.outputFullPath+".bak";
     }
     else
     {
         first_arg << "-ss" << cfg.StartTime << "-endpos" << cfg.Endpos
-                  << "-oac" << cfg.AEncoder << "-ovc"<<"copy" << m_item.fullpath <<  "-o" << m_item.outputFullPath+".bak";
+                  << "-oac" << cfg.AEncoder << "-ovc"<<"copy -noskip -vf scale,format=yuy2" << m_item.fullpath <<  "-o" << m_item.outputFullPath+".bak";
     }
     QProcess *first_p = new QProcess;
     first_p->start(m_mencoder,first_arg);
@@ -283,8 +314,8 @@ void ItemView::slot_MouseOnConvert()
     arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
         << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
            +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-        << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-        << "-xy" << cfg.Height << m_item.outputFullPath+".bak" << "-o" << m_item.outputFullPath;
+        << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale,format=yuy2" << "-zoom"
+        << "-xy" << cfg.VScale << m_item.outputFullPath+".bak" << "-o" << m_item.outputFullPath;
 
     _state = Converting;
     m_Process->start(m_mencoder,arg);

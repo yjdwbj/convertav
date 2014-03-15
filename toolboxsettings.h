@@ -14,6 +14,9 @@
 #include <QTableView>
 #include <QTableWidget>
 
+
+
+
 class ToolBoxSettings: public QWidget
 {
     Q_OBJECT
@@ -21,7 +24,7 @@ public:
 
     explicit ToolBoxSettings(QWidget *parent = 0);
     ~ToolBoxSettings();
-    void setFilmHW(QPair<QString,QString> );
+    void setFilmHW(const QString & );
     void updateToolBox(QStringList list);
     ConvertCfg getConvertArgments() const{return m_ConvertCfg;}
     void updateStructConvertCfg();
@@ -51,6 +54,7 @@ private:
     QComboBox* cbbox_abitrate;
     QComboBox* cbbox_channel;
     QComboBox* cbbox_samplerate;
+    QComboBox* cbbox_scale;
     QTableWidget *tw_time;
     QTableWidgetItem *twi_start;
     QTableWidgetItem *twi_end;
@@ -61,8 +65,9 @@ private:
     QTimeEdit* tedit_end;
     SystemSettings *m_sys;
     QList<QComboBox*> m_listComboBox;
-    QLineEdit *edt_high;
-    QLineEdit *edt_width;
+//    QLineEdit *edt_high;
+//    QLineEdit *edt_width;
+
     ConvertCfg m_ConvertCfg;
 
 
