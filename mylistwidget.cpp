@@ -1,4 +1,9 @@
 #include "mylistwidget.h"
+#include <QMenu>
+#include <QAction>
+#include <QMessageBox>
+
+const QString menuActions="删除|全部删除|-|开始所有转换...|打开源文件目录...";
 
 MyListWidget::MyListWidget(QWidget *parent)
     :QListWidget(parent)
@@ -56,3 +61,31 @@ void MyListWidget::dropEvent(QDropEvent *event)
     QListWidget::dropEvent(event);
 }
 
+
+void MyListWidget::contextMenuEvent(QContextMenuEvent *)
+{
+    // event->accept();
+
+        QMenu* menu = new QMenu();
+        menu->addAction("全部删除");
+        connect(menu,SIGNAL(triggered(QAction*)),SIGNAL(deleteAllItems(QAction*)));
+//        QStringList llist = menuActions.split("|");
+//        for(int i = 0 ; i < llist.size();i++)
+//        {
+//            if(!llist[i].compare("-"))
+//            {
+//                menu->addSeparator();
+//            }
+//            else
+//            {
+//                menu->addAction(llist[i]);
+//            }
+//        }
+
+//        if(this->count() == 0)
+//            menu->setEnabled(false);
+
+        menu->exec(QCursor::pos());
+
+       delete menu;
+}

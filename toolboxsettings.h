@@ -29,6 +29,8 @@ public:
     ConvertCfg getConvertArgments() const{return m_ConvertCfg;}
     void updateStructConvertCfg();
     void setTimeAndNameToTable(const QPair<QString, QString> &pair);
+    SystemSettings *m_sys;
+    void clearAllInput();
 
 private slots:
 
@@ -48,7 +50,7 @@ private:
     QComboBox* cbox_vencoder;
     QComboBox* cbox_hwrate;
     QComboBox* cbox_vbitrate;
-    QComboBox* cbox_enoderCount;
+    QComboBox* cbox_encoderCount;
     QComboBox* cbox_frameRate;
     QComboBox* cbbox_aencoder;
     QComboBox* cbbox_abitrate;
@@ -63,8 +65,10 @@ private:
 
     QTimeEdit* tedit_start;
     QTimeEdit* tedit_end;
-    SystemSettings *m_sys;
-    QList<QComboBox*> m_listComboBox;
+
+    QList<QComboBox*> m_ToolBoxlistComboBox;
+    QStringList m_SystemVauleList;
+
 //    QLineEdit *edt_high;
 //    QLineEdit *edt_width;
 

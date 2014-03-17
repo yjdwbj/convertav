@@ -1,19 +1,19 @@
 #include "systemsettings.h"
 
 const QString VEncoder("mjpeg");
-const QString AEncoder("pcm");
-const QString VBitRate("256,512,768,1000,1200,1500");
-const QString ABitRate("16,32,40,48,56,64,80,96,112,128,160" );
+const QString AEncoder("pcm_u8,pcm_s16le");
+const QString VBitRate("");
+const QString ABitRate("" );
 const QString FrameRate("8,10,12,15,23.976,24,25,29.97,30");
-const QString HWRatio("1,4/3,16/9,221/100");
+const QString HWRatio("1,4:3,16:9,221:100");
 const QString EncoderCount("1,2");
 const QString SampleRate("8000,22050,24000,32000,44100,48000");
 const QString Channel("1,2");
 
-const QStringList m_listkey(QStringList() << "Scale" << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
-          << "VEncoder=" << "ABitrate=" << "AEncoder=" << "Channel=" << "Samplerate=");
+const QStringList m_listkey(QStringList()  << "EnconderCount=" << "FrameRate=" << "HWRate=" << "VBitrate="
+          << "VEncoder=" << "ABitrate=" << "AEncoder=" << "Channel=" << "Samplerate=" << "Scale=");
 
-
+/* the m_listkey order must be set same m_listAllItems and m_listcbbox */
 
 SystemSettings::SystemSettings(QWidget *parent)
     :QDialog(parent),
@@ -26,8 +26,8 @@ SystemSettings::SystemSettings(QWidget *parent)
 
 
     m_listAllItems << EncoderCount << FrameRate << HWRatio << VBitRate << VEncoder << ABitRate
-                   << AEncoder << Channel << SampleRate;
-//    m_listComboBox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
+                   << AEncoder << Channel << SampleRate << GetSupportedScale().join(",");
+//    m_listComboBox << cbox_encoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
 //                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
 //                         << cbbox_samplerate;
     this->setWindowTitle("配置");
@@ -89,9 +89,10 @@ SystemSettings::SystemSettings(QWidget *parent)
 
     QLabel* lab_vbitrate = new QLabel("比特率:",box_video);
     cbox_vbitrate = new QComboBox(box_video);
+    cbox_vbitrate->setEnabled(false);
 
     QLabel* lab_enoderCount = new QLabel("编码遍数:",box_video);
-    cbox_enoderCount = new QComboBox(box_video);
+    cbox_encoderCount = new QComboBox(box_video);
 
     QLabel* lab_frameRate = new QLabel("帧数:",box_video);
     cbox_frameRate = new QComboBox(box_video);
@@ -105,7 +106,7 @@ SystemSettings::SystemSettings(QWidget *parent)
     video_lay->addWidget(lab_vbitrate,1,0,Qt::AlignCenter);
     video_lay->addWidget(cbox_vbitrate,1,1);
     video_lay->addWidget(lab_enoderCount,1,2,Qt::AlignCenter);
-    video_lay->addWidget(cbox_enoderCount,1,3);
+    video_lay->addWidget(cbox_encoderCount,1,3);
     video_lay->addWidget(lab_frameRate,1,4,Qt::AlignCenter);
     video_lay->addWidget(cbox_frameRate,1,5);
 
@@ -117,6 +118,7 @@ SystemSettings::SystemSettings(QWidget *parent)
 
     QLabel* lab_abitrate = new QLabel("比特率:",box_audio);
     cbbox_abitrate = new QComboBox(box_audio);
+    cbbox_abitrate->setEnabled(false);
 
     QLabel* lab_channel = new QLabel("声道:",box_audio);
      cbbox_channel = new QComboBox();
@@ -135,7 +137,7 @@ SystemSettings::SystemSettings(QWidget *parent)
 
 
 
-    m_listcbbox << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate << cbox_vencoder
+    m_listcbbox << cbox_encoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate << cbox_vencoder
                   << cbbox_abitrate << cbbox_aencoder << cbbox_channel << cbbox_samplerate << cbbox_scale;
 
 
@@ -213,27 +215,17 @@ void SystemSettings::InitDialog()
     {
         m_listcbbox[i]->addItems(m_listAllItems[i].split(","));
     }
-    m_listcbbox[i]->addItems(GetSupportedScale());
 
-//    cbox_enoderCount->addItems(EncoderCount);
-//    cbox_frameRate->addItems(FrameRate);
-//    cbox_hwrate->addItems(HWRatio);
-//    cbox_vbitrate->addItems(VBitRate);
-//    cbox_vencoder->addItems(VEncoder);
-//    cbbox_abitrate->addItems(ABitRate);
-//    cbbox_aencoder->addItems(AEncoder);
-//    cbbox_channel->addItems(Channel);
-//    cbbox_samplerate->addItems(SampleRate);
 
 }
 
 void SystemSettings::UpdateCurrentIndexText()
 {
     m_currentIndexText.clear();
-    m_currentIndexText << cbbox_scale->currentText() << cbox_enoderCount->currentText()
+    m_currentIndexText  << cbox_encoderCount->currentText()
     << cbox_frameRate->currentText() << cbox_hwrate->currentText() << cbox_vbitrate->currentText()
     << cbox_vencoder->currentText() << cbbox_abitrate->currentText() << cbbox_aencoder->currentText()
-    <<   cbbox_channel->currentText() << cbbox_samplerate->currentText();
+    <<   cbbox_channel->currentText() << cbbox_samplerate->currentText() << cbbox_scale->currentText();
 }
 
 void SystemSettings::writeCfgToFile(const QString &fname)
@@ -292,6 +284,7 @@ void SystemSettings::readCfgToFile(const QString &fname)
      edt_dir->setText(m_currentIndexText.takeAt(0));
      int v = m_currentIndexText.takeAt(0).toInt();
      cbox_autoopen->setChecked(v == 1 ? true : false);
+
 //     edt_height->setText(m_currentIndexText.takeAt(0));
 //     edt_width->setText(m_currentIndexText.takeAt(0));
      for(int i = 0; i < m_listcbbox.count();i++)

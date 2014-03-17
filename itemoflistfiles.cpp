@@ -13,9 +13,11 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
 //      lab_videoinfo(new QLabel),
       lab_view(new QLabel("test")),
       m_AppPath(qApp->applicationDirPath()),
-      m_mencoder(m_AppPath+ ("/mencoder.exe")),
+//      m_mencoder(m_AppPath+ ("/mencoder.exe")),
       m_ffmpeg(m_AppPath + ("/ffmpeg.exe")),
-      _state(Stopped)
+//      cbox_selelct(new QCheckBox),
+      _state(Stopped),
+      _checked(Qt::Checked)
 {
      m_item = item;
      m_item.isSingleConvert = false;
@@ -32,6 +34,7 @@ ItemView::ItemView(itemstruct &item, const ToolBoxSettings *tbs, QWidget *parent
     lab_view->setPixmap(QPixmap::fromImage(img).scaled(68,54));
 
     main_layout->addWidget(lab_view,0,0,2,1);
+    removeTempFile(m_item.image);
 
 
 
@@ -92,7 +95,7 @@ void ItemView::slot_SingleConvert()
     m_item.isSingleConvert = true;
     m_item.isCancelConvert = false;
     m_item.isConverted = false;
-    slot_MouseOnConvert();
+    slot_MouseOnConvertFFMPEG();
 }
 
 void ItemView::slot_ReNameFile()
@@ -137,12 +140,11 @@ QLayout* ItemView::CreateReNameLayout()
 
 QLayout* ItemView::CreateItemInfoLayout()
 {
-    cbox_selelct = new QCheckBox;
-    cbox_selelct->setCheckState(Qt::Checked);
+//    cbox_selelct->setCheckState(Qt::Checked);
     QHBoxLayout *twoline = new QHBoxLayout;
     QLabel* ico_time = new QLabel;
     setDefaultStyleSheet(ico_time,":/lcy/image/time.png");
-    twoline->addWidget(cbox_selelct);
+//    twoline->addWidget(cbox_selelct);
     twoline->addWidget(ico_time);
     QLabel *lab_time = new QLabel;
     lab_time->setText(m_item.file_time);
@@ -245,97 +247,66 @@ void ItemView::slot_MouseOnConvertFFMPEG()
     m_Process = new QProcess;
     connect(m_Process,SIGNAL(finished(int)),SLOT(slot_ConvertFinished(int)));
     connect(m_Process,SIGNAL(readyReadStandardOutput()),SLOT(slot_ConvertingStandardOutput()));
+    connect(m_Process,SIGNAL(readyReadStandardError()),SLOT(slot_ConvertingStandardOutput()));
     QStringList arg;
     ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
     m_item.outputFullPath = cfg.OutputDir+"/"+m_item.filename+".avi";
 
-    arg << " -c:a " << cfg.AEncoder << "-c:v " << cfg.VEncoder << " -b:a " << cfg.ABitRate << " -b:v "<<
-   cfg.VBitRate << " -pass  " << cfg.EncoderCount << " -aspect " << cfg.HWRatio << " -r " << cfg.Frame << " -ar "
-        << cfg.SampleRate << " -ac "+cfg.Channel << "-s " << cfg.VScale << m_item.fullpath << "-o" << m_item.outputFullPath;
+    QTime tt(0,0,0);
+     m_fileLengthForSeconds = tt.secsTo(QTime::fromString(cfg.Endpos,"HH:mm:ss"));
+
+
+    arg <<  "-i" << m_item.fullpath << "-ss" << cfg.StartTime << "-t" << cfg.Endpos  << "-c:a" << cfg.AEncoder << "-c:v" << cfg.VEncoder
+//         << "-b:a" << cfg.ABitRate // here is valid
+//         << "-b:v"<< cfg.VBitRate
+         << /*"-pass" << cfg.EncoderCount <<*/ "-aspect"
+         << cfg.HWRatio << "-r" << cfg.Frame << "-ar"
+        << cfg.SampleRate << "-ac" << cfg.Channel << "-y" << "-s" << cfg.VScale   <<  m_item.outputFullPath;
 
     _state = Converting;
+    this->btn_delself->setEnabled(false);
     m_Process->start(m_ffmpeg,arg);
-}
-
-void ItemView::slot_MouseOnConvert()
-{
-    if(m_item.isCancelConvert)
+    if(!m_Process->waitForStarted())
         return;
-    if(!m_item.isStandby)
-    {
-        removeItemLayout(main_layout->itemAtPosition(1,1));
-        main_layout->addLayout(CreateConvertingLayout(),1,1);
-    }
-
-    m_Process = new QProcess;
-    connect(m_Process,SIGNAL(finished(int)),SLOT(slot_ConvertFinished(int)));
-    connect(m_Process,SIGNAL(readyReadStandardOutput()),SLOT(slot_ConvertingStandardOutput()));
-    QStringList arg;
-    ConvertCfg cfg = m_ToolBoxSettings->getConvertArgments();
-    m_item.outputFullPath = cfg.OutputDir+"/"+m_item.filename+".avi";
-//    mencoder.exe  -of lavf   -oac pcm -ovc lavc -lavcopts  \
-//    acodec=pcm_u8:vcodec=mjpeg:abitrate=96:vbitrate=640:vpass=1:aspect=16/9 -ofps 15 \
-//    -af lavcresample=16000:channels=2  -vf scale -zoom -xy 160 AlanSiegel_2010-low-zh-cn.mp4 -o ppp.avi
-
-    QStringList first_arg;
-
-    if(!cfg.Endpos.compare("00:00:00"))
-    {
-        first_arg << "-ss" << "00:00:00"
-                  << "-oac" << cfg.AEncoder << "-ovc" << "copy -noskip -vf scale,format=yuy2" << m_item.fullpath << "-o" << m_item.outputFullPath+".bak";
-    }
-    else
-    {
-        first_arg << "-ss" << cfg.StartTime << "-endpos" << cfg.Endpos
-                  << "-oac" << cfg.AEncoder << "-ovc"<<"copy -noskip -vf scale,format=yuy2" << m_item.fullpath <<  "-o" << m_item.outputFullPath+".bak";
-    }
-    QProcess *first_p = new QProcess;
-    first_p->start(m_mencoder,first_arg);
-    while(!first_p->waitForFinished(500))
-        QApplication::processEvents();
-
-//    if(!cfg.Endpos.compare("00:00:00"))
-//    {
-//        arg <<"-ss" <<cfg.StartTime   << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-//            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-//               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-//            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-//            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
-//    }
-//    else
-//    {
-//        arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-//            << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-//               +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-//            << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale" << "-zoom"
-//            << "-xy" << cfg.Height << m_item.fullpath << "-o" << m_item.outputFullPath;
-//    }
-
-    arg << "-of" << "lavf" << "-oac" << cfg.AEncoder << "-ovc" << "lavc" << "-lavcopts"
-        << "acodec=pcm_u8:vcodec="+cfg.VEncoder+":abitrate="+cfg.ABitRate+":vbitrate="+cfg.VBitRate+":vpass="
-           +cfg.EncoderCount+":aspect="+cfg.HWRatio << "-ofps" << cfg.Frame << "-af"
-        << "lavcresample="+cfg.SampleRate+":channels="+cfg.Channel << "-vf" << "scale,format=yuy2" << "-zoom"
-        << "-xy" << cfg.VScale << m_item.outputFullPath+".bak" << "-o" << m_item.outputFullPath;
-
-    _state = Converting;
-    m_Process->start(m_mencoder,arg);
+//    while(!m_Process->waitForFinished(500))
+//        QApplication::processEvents();
 }
+
+
 
 void ItemView::slot_ConvertingStandardOutput()
 {
-    QByteArray ba(m_Process->readLine());
+//    QByteArray ba(m_Process->readLine());
 
-    if(_state == Stopped)
-        return;
-    if(ba.startsWith("Pos:"))
-    {
-       ba = ba.split('\r').at(0);
-       ba = ba.split('(').at(1);
-       ba = ba.split('%').at(0);
-       QProgressBar *p = this->findChild<QProgressBar*>("pgbar");
-       if(p)
-       p->setValue(ba.toInt());
-    }
+//    if(_state == Stopped)
+//        return;
+//    if(ba.startsWith("Pos:"))
+//    {
+//       ba = ba.split('\r').at(0);
+//       ba = ba.split('(').at(1);
+//       ba = ba.split('%').at(0);
+//       QProgressBar *p = this->findChild<QProgressBar*>("pgbar");
+//       if(p)
+//       p->setValue(ba.toInt());
+//    }
+
+    QString out(m_Process->readAllStandardError());
+    QStringList outlist = out.split(QRegExp("(\\r\\n)"),
+                                    QString::SkipEmptyParts);
+       if(_state == Stopped)
+            return;
+       for(int i =0 ; i < outlist.size();i++)
+       if(outlist[i].startsWith("frame="))
+       {
+           QString tmp = out.section("=",5,5);
+           tmp = tmp.section(".",0,0);
+           QTime tt(0,0,0);
+           float sec = tt.secsTo(QTime::fromString(tmp,"HH:mm:ss"));
+           sec = (sec / m_fileLengthForSeconds) * 100;
+           QProgressBar *p = this->findChild<QProgressBar*>("pgbar");
+           if(p)
+           p->setValue(sec);
+       }
 }
 
 QLayout* ItemView::CreateConvertingLayout()
@@ -362,8 +333,6 @@ QLayout* ItemView::CreateConvertingLayout()
 
 void ItemView::slot_ConvertToStandby()
 {
-
-
     removeItemLayout(main_layout->itemAtPosition(1,1));
     main_layout->addLayout(CreateConvertingLayout(),1,1);
     m_item.isStandby = true;
@@ -375,10 +344,11 @@ void ItemView::slot_ConvertToStandby()
 
 void ItemView::slot_ConvertFinished(int ret)
 {
-    removeTempFile(m_item.outputFullPath+".bak");
+  //  removeTempFile(m_item.outputFullPath+".bak");
     _state = Stopped;
     if(m_Process->exitStatus()==QProcess::NormalExit)
     {
+        this->btn_delself->setEnabled(true);
         m_item.isConverted = true;
         lab_view->setPixmap(QPixmap(":/lcy/image/converted.png"));
     }
@@ -405,7 +375,8 @@ void ItemView::removeTempFile(const QString &file)
 
 void ItemView::slot_stopConvert()
 {
-    removeTempFile(m_item.outputFullPath+".bak");
+  //  removeTempFile(m_item.outputFullPath+".bak");
+     this->btn_delself->setEnabled(true);
     if((getState() == Stopped)
             && m_item.isStandby)
     {

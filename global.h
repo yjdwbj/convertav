@@ -146,7 +146,7 @@ static const VideoSize  support_scale[]={{"NTSC", "720x480"},
                                     };
 
 
-static const char *support_format[] ={"avi","mp4","rm","mkv","wmv","mov","3gp","mpeg","dat","end"};
+static const char *support_format[] ={"avi","mp4","rm","mkv","wmv","mov","3gp","mpeg","dat","flv","rmvb","264","end"};
 
 
 

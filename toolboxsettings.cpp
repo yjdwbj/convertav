@@ -10,7 +10,7 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
       cbox_frameRate(new QComboBox),
       cbox_hwrate(new QComboBox),
       cbox_vbitrate(new QComboBox),
-      cbox_enoderCount(new QComboBox),
+      cbox_encoderCount(new QComboBox),
       cbbox_aencoder(new QComboBox),
       cbbox_abitrate(new QComboBox),
       cbbox_channel(new QComboBox),
@@ -25,30 +25,32 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
       tedit_end(new   QTimeEdit),
       edt_fname(new QLineEdit())
 {
+
     QGroupBox *main_gbox = new QGroupBox();
     main_ToolBox = new QToolBox(main_gbox);
-//    m_listComboBox  << cbox_enoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
-//                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
-//                         << cbbox_samplerate << cbbox_scale;
-    m_listComboBox = m_sys->getAllComboBox();
-    QStringList tmplist = m_sys->getlistAllItems();
+    m_ToolBoxlistComboBox  << cbox_encoderCount << cbox_frameRate << cbox_hwrate << cbox_vbitrate
+                      << cbox_vencoder << cbbox_abitrate << cbbox_aencoder <<cbbox_channel
+                         << cbbox_samplerate << cbbox_scale;
+   // m_listComboBox = m_sys->getAllComboBox();
+    m_SystemVauleList = m_sys->getlistAllItems();
     int i = 0;
-    for(i = 0 ; i < tmplist.count();i++)
+    for(i = 0 ; i < m_SystemVauleList.count();i++)
     {
-        m_listComboBox[i]->addItems(tmplist[i].split(','));
-        connect(m_listComboBox[i],SIGNAL(currentTextChanged(QString)),
+        m_ToolBoxlistComboBox[i]->addItems(m_SystemVauleList[i].split(','));
+        connect(m_ToolBoxlistComboBox[i],SIGNAL(currentTextChanged(QString)),
                 SLOT(SomeValueHasChanged(QString)));
     }
-    m_listComboBox[i]->addItems(m_sys->GetSupportedScale());
-    connect(m_listComboBox[i],SIGNAL(currentTextChanged(QString)),
-            SLOT(SomeValueHasChanged(QString)));
-  //  setFilmHW(m_sys->getFilmHW());
+
+    cbbox_abitrate->setEnabled(false); // pcm_* not use the audio bitrate
+    cbbox_abitrate->clear();
+    cbox_vbitrate->setEnabled(false);
+
+   // setFilmHW(m_SystemVauleList.last());
 
     setBaseSettings();
     setAudioSettings();
     setVideoSettings();
     updateStructConvertCfg();
-
 
     QVBoxLayout *vlayout = new QVBoxLayout(main_gbox);
     vlayout->setSpacing(0);
@@ -57,13 +59,12 @@ ToolBoxSettings::ToolBoxSettings(QWidget *parent)
     main_Layout->addWidget(main_gbox);
     main_Layout->setSpacing(0);
     setLayout(main_Layout);
-
-
+    this->setEnabled(false);
 }
 
 void ToolBoxSettings::SomeValueHasChanged(QString)
 {
-    updateStructConvertCfg();
+    updateStructConvertCfg(); // 更改了一个某一个值
 }
 
 void ToolBoxSettings::setFilmHW(const QString &s)
@@ -77,40 +78,24 @@ void ToolBoxSettings::setBaseSettings()
 {
     QLabel *lab_fname = new QLabel("文件名");
     edt_fname->setReadOnly(true);
+    edt_fname->setEnabled(false);
     QLabel *lab_vsize = new QLabel("视频大小");
     QHBoxLayout *lay_hw = new QHBoxLayout;
 
-//    QLabel *lab_high = new QLabel("高:");
-
-//    edt_high->setInputMask("0000");
-//    edt_high->setFixedWidth(40);
-//    connect(edt_high,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
-//    QLabel *Lab_width = new QLabel("宽:");
-//    edt_width->setInputMask("0000");
-//    edt_width->setFixedWidth(40);
-//    connect(edt_width,SIGNAL(textChanged(QString)),SLOT(SomeValueHasChanged(QString)));
-//    lay_hw->addWidget(lab_high);
-//    lay_hw->addWidget(edt_high);
-//    lay_hw->addWidget(Lab_width);
     lay_hw->addWidget(cbbox_scale);
 
-//    lay_hw->addStretch();
-    QLabel *lab_quality = new QLabel("质量");
-    QComboBox *cbox_quality = new QComboBox;
+
+//    QLabel *lab_quality = new QLabel("质量");
+//    QComboBox *cbox_quality = new QComboBox;
     QLabel *lab_totaltime = new QLabel("总时间长度");
-//    QLineEdit *edt_time = new QLineEdit();
-
-
-
-
 
 
     base_Layout->addWidget(lab_fname);
     base_Layout->addWidget(edt_fname);
     base_Layout->addWidget(lab_vsize);
     base_Layout->addLayout(lay_hw);
-    base_Layout->addWidget(lab_quality);
-    base_Layout->addWidget(cbox_quality);
+//    base_Layout->addWidget(lab_quality);
+//    base_Layout->addWidget(cbox_quality);
     base_Layout->addWidget(lab_totaltime);
     CreateTotalTimeLayout();
     base_Layout->addWidget(tw_time);
@@ -173,10 +158,20 @@ void ToolBoxSettings::slot_updateTime()
 void ToolBoxSettings::setTimeAndNameToTable(const QPair<QString,QString> &pair)
 {
 
-     twi_time->setText(pair.first.section(".",0,0));
+     this->setEnabled(true);
+    QString filetime = pair.first.section(".",0,0);
+     twi_time->setText(filetime);
+#ifndef QT_NO_DEBUG
+
+#endif
+
+     tedit_start->setMaximumTime(QTime::fromString(filetime,"HH:mm:ss"));
+     tedit_end->setMaximumTime(QTime::fromString(filetime,"HH:mm:ss"));
      tedit_start->setTime(QTime(0,0,0,0));
      tedit_end->setTime(QTime::fromString(twi_time->text(),"HH:mm:ss"));
      edt_fname->setText(pair.second);
+     m_sys->UpdateCurrentIndexText();
+     updateToolBox(m_sys->getCurrentIndexText());
      updateStructConvertCfg();
 }
 
@@ -195,7 +190,7 @@ void ToolBoxSettings::setVideoSettings()
     video_Layout->addWidget(lab_bitRate);
     video_Layout->addWidget(cbox_vbitrate);
     video_Layout->addWidget(lab_encoderCount);
-    video_Layout->addWidget(cbox_enoderCount);
+    video_Layout->addWidget(cbox_encoderCount);
     video_Layout->addWidget(lab_scale);
     video_Layout->addWidget(cbox_hwrate);
     QWidget *w = new QWidget;
@@ -205,13 +200,26 @@ void ToolBoxSettings::setVideoSettings()
 
 void ToolBoxSettings::updateToolBox(QStringList list)
 {
-    setFilmHW(list.at(0));
-    for(int i = 2;i < list.count() ;i++)
+   setFilmHW(list.last());
+    int i = 0;
+    for(;i < list.count() ;i++)
     {
-        m_listComboBox[i-2]->setCurrentText(list[i]);
+        m_ToolBoxlistComboBox[i]->setCurrentText(list[i]);
     }
+
 }
 
+void ToolBoxSettings::clearAllInput()
+{
+    int i = 0;
+    for(;i < m_ToolBoxlistComboBox.count() ;i++)
+    {
+        m_ToolBoxlistComboBox[i]->clear();
+    }
+    edt_fname->setText("");
+    twi_time->setText("");
+    twi_end->setText("");
+}
 
 void ToolBoxSettings::setAudioSettings()
 {
@@ -241,10 +249,10 @@ void ToolBoxSettings::updateStructConvertCfg()
 //    m_ConvertCfg.Height = edt_high->text();
 //    m_ConvertCfg.Width = edt_width->text();
     m_ConvertCfg.VScale = cbbox_scale->currentText().section(" ",1,1);
-    m_ConvertCfg.ABitRate = cbbox_abitrate->currentText();
+//  m_ConvertCfg.ABitRate = cbbox_abitrate->currentText();
     m_ConvertCfg.AEncoder = cbbox_aencoder->currentText();
     m_ConvertCfg.Channel = cbbox_channel->currentText();
-    m_ConvertCfg.EncoderCount = cbox_enoderCount->currentText();
+    m_ConvertCfg.EncoderCount = cbox_encoderCount->currentText();
     m_ConvertCfg.Frame = cbox_frameRate->currentText();
     m_ConvertCfg.HWRatio = cbox_hwrate->currentText();
     m_ConvertCfg.SampleRate = cbbox_samplerate->currentText();

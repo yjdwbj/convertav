@@ -18,6 +18,7 @@
 #include "mylistwidget.h"
 #include "myframe.h"
 #include <QMessageBox>
+#include <QAction>
 
 
 
@@ -29,6 +30,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+
 private slots:
     void slot_openfiles();
     void slot_DClickToPrePlay(QModelIndex);
@@ -37,9 +39,11 @@ private slots:
     void slot_ConvertAll();
     void slot_Settings();
     void slot_removeItem(QWidget *);
+    void slot_removeAllItem(QAction *);
     void slot_GotUrls(QList<QUrl>);
     void slot_GotFileListFromGuide(QStringList);
     void slot_ReadOutputFromScreen();
+    void slot_RightClickMenu();
 
     ConvertCfg getConvertCfg() const {return m_ConvertCfg;}
 private:
@@ -58,7 +62,7 @@ private:
     QString m_configfile;
     QString m_mplayer;
     QString m_AppPath;
-    QString m_mencoder;
+//    QString m_mencoder;
     QString m_ffmpeg;
     QList<QListWidgetItem*> m_listwidgetitem;
     QList<itemstruct> m_listitemstruct;
@@ -74,9 +78,10 @@ private:
 
     void ReadOrCreateCfg();
     void SwitchMainListToGuide();
-    void fillFiletoListWidget(const QStringList &list);
+    void fillFiletoListWidget(QStringList &list);
     QStringList FFMPEGScreenshotArg(const QString &file);
-    void FormatVideoInfo(const QStringList &data,itemstruct &result);
+    void FormatVideoInfo(const QStringList &data,itemstruct &result,const QString &fnamel);
+    void FortmatVideoInfoMplayer(const QStringList &readlist, itemstruct &item);
 };
 
 #endif // MAINWINDOW_H

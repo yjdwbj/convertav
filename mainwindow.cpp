@@ -12,7 +12,7 @@
 #include <QTextStream>
 
 
-static const char *version=" v1.05";
+static const char *version=" v1.06";
 
 
 
@@ -29,9 +29,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ToolBoxSettings(new ToolBoxSettings),
     m_LastPath("")
 {
+
     m_AppPath = qApp->applicationDirPath();
     m_mplayer=m_AppPath+("/mplayer.exe");
-    m_mencoder=m_AppPath+("/mencoder.exe");
+//    m_mencoder=m_AppPath+("/mencoder.exe");
     m_ffmpeg=m_AppPath+("/ffmpeg.exe");
     setWindowTitle(QString("视频转换工具")+version);
 
@@ -56,15 +57,15 @@ MainWindow::MainWindow(QWidget *parent) :
         FilesOrDirNoExists(m_mplayer);
     }
 
-    if(!QFileInfo(m_mencoder).exists())
+    if(!QFileInfo(m_ffmpeg).exists())
     {
-        FilesOrDirNoExists(m_mencoder);
+        FilesOrDirNoExists(m_ffmpeg);
     }
 
     lwt_ConverFiles->setFixedWidth(600);
     lwt_ConverFiles->setObjectName("mainList");
 
-
+    connect(lwt_ConverFiles,SIGNAL(deleteAllItems(QAction*)),SLOT(slot_removeAllItem(QAction*)));
     connect(lwt_ConverFiles,SIGNAL(itemClicked(QListWidgetItem*)),SLOT(slot_ClickToSetCurrentRow(QListWidgetItem*)));
     connect(lwt_ConverFiles,SIGNAL(hasUrls(QList<QUrl>)),SLOT(slot_GotUrls(QList<QUrl>)));
     //    lwt_ConverFiles->setAlternatingRowColors(true);
@@ -122,8 +123,37 @@ void MainWindow::slot_GotFileListFromGuide(QStringList list)
     fillFiletoListWidget(list);
 }
 
+void MainWindow::slot_RightClickMenu()
+{
+
+
+            QMenu* menu = new QMenu();
+            menu->addAction("全部删除");
+            connect(menu,SIGNAL(triggered(QAction*)),SLOT(slot_removeAllItem(QAction*)));
+    //        QStringList llist = menuActions.split("|");
+    //        for(int i = 0 ; i < llist.size();i++)
+    //        {
+    //            if(!llist[i].compare("-"))
+    //            {
+    //                menu->addSeparator();
+    //            }
+    //            else
+    //            {
+    //                menu->addAction(llist[i]);
+    //            }
+    //        }
+
+    //        if(this->count() == 0)
+    //            menu->setEnabled(false);
+
+            menu->popup(this->cursor().pos());
+}
+
+
 void MainWindow::slot_ClickToSetCurrentRow(QListWidgetItem *p)
 {
+
+
     ItemView  *iv= (ItemView*)lwt_ConverFiles->itemWidget(p);
    QLineEdit *le = iv->findChild<QLineEdit*>("ReName");
    if(le)
@@ -251,40 +281,82 @@ QStringList MainWindow::FFMPEGScreenshotArg(const QString &file)
     return arg;
 }
 
+void MainWindow::FortmatVideoInfoMplayer(const QStringList &readlist,itemstruct &item)
+{
+    QTime pt(0,0,0);
+    QTime nt;
 
-void MainWindow::FormatVideoInfo(const QStringList &data,itemstruct &item)
+            for(int nn = 0;nn < readlist.count();nn++)
+            {
+                if(readlist[nn].startsWith("VIDEO:"))
+                {
+                    item.video_info=readlist[nn].section(":",1);
+                }
+                else if(readlist[nn].startsWith("AUDIO:"))
+                {
+                    item.audio_info = readlist[nn].section(":",1);
+                }
+                else if(readlist[nn].startsWith("ID_LENGTH="))
+                {
+                    pt.setHMS(0,0,0);
+                    nt.setHMS(0,0,0);
+                    QString t = readlist[nn].section("=",1);
+                    nt = pt.addMSecs(qint32(t.toFloat()*1000));
+                    item.file_time = nt.toString(tr("hh:mm:ss.zzz"));
+                }
+            }
+}
+
+
+void MainWindow::FormatVideoInfo(const QStringList &data, itemstruct &item, const QString &fnamel)
 {
     QTime nt;
     nt.setHMS(0,0,0);
-    for(int nn = 0;nn < data.count();nn++)
+    QString tmp;
+    int nn = 0;
+    for(;nn < data.size();nn++)
     {
 
-        if(data[nn].contains("Stream #0:"))
+        if(data[nn].trimmed().contains("Invalid data found when processing input"))
+        {
+            QMessageBox::warning(this,"出错了","这不是一个有效的视频的文件 :"+fnamel);
+        }
+        if(data[nn].trimmed().startsWith("Stream #0:"))
         {
             if(data[nn].contains("Audio:"))
             {
-                item.audio_info = data[nn].section("Audio:",1,1);
+                tmp = data[nn].trimmed().section("Audio:",1,1);
+                item.audio_info = tmp.remove("(default)");
             }
                 else
             {
-                item.video_info = data[nn].section("Video:",1,1);
+                if(!item.video_info.isEmpty())
+                    continue;
+                tmp =data[nn].section("Video:",1,1);
+                item.video_info = tmp.remove("(default)");
             }
 
         }
-        else if(data[nn].contains("Duration:"))
+        else if(data[nn].trimmed().contains("Duration:"))
         {
-           item.file_time = nt.toString(data[nn].section(QRegExp(":|,"),1,1));
+            tmp = data[nn].section(",",0,0);
+            tmp.trimmed();
+            tmp.remove("Duration:");
+            item.file_time = tmp.trimmed();
         }
     }
 }
 
 void MainWindow::slot_ReadOutputFromScreen()
 {
+    /* ffmpeg must be set readAllStandardError(), the mplayer and mencoder set readAllStanardOutput() */
      m_ffmpeg_info.append(m_screenProcess->readAllStandardError());
+
+
 }
 
 
-void MainWindow::fillFiletoListWidget(const QStringList &list)
+void MainWindow::fillFiletoListWidget(QStringList &list)
 {
 
 
@@ -293,6 +365,7 @@ void MainWindow::fillFiletoListWidget(const QStringList &list)
 
     QTime pt(0,0,0);
     QTime nt;
+    QStringList invaild;
 
     QStringList readlist;
     m_screenProcess = new QProcess;
@@ -305,49 +378,60 @@ void MainWindow::fillFiletoListWidget(const QStringList &list)
         item.image = QDir::currentPath()+"/"+arglist.last();
         m_listItems.append(list[i]);
         m_screenProcess->start(m_ffmpeg,arglist,QIODevice::ReadOnly);
-        if (!m_screenProcess->waitForStarted())
-            return ;
-        if(!m_screenProcess->waitForFinished())
-            return ;
+        if(!m_screenProcess->waitForStarted())
+            return;
+        while(!m_screenProcess->waitForFinished(500))
+            QApplication::processEvents();
+//        if (!m_screenProcess->waitForStarted(-1))
+//            return ;
 
         item.isConverted = false;
         item.isStandby = false;
         item.fullpath = list[i];
         item.filename = QFileInfo(list[i]).completeBaseName();
 
-        FormatVideoInfo(m_ffmpeg_info.split(QRegExp("(\\r\\n)"),QString::SkipEmptyParts),item);
-//        for(int nn = 0;nn < readlist.count();nn++)
-//        {
-//            if(readlist[nn].startsWith("VIDEO:"))
-//            {
-//                item.video_info=readlist[nn].section(":",1);
-//            }
-//            else if(readlist[nn].startsWith("AUDIO:"))
-//            {
-//                item.audio_info = readlist[nn].section(":",1);
-//            }
-//            else if(readlist[nn].startsWith("ID_LENGTH="))
-//            {
-//                pt.setHMS(0,0,0);
-//                nt.setHMS(0,0,0);
-//                QString t = readlist[nn].section("=",1);
-//                nt = pt.addMSecs(qint32(t.toFloat()*1000));
-//                item.file_time = nt.toString(tr("hh:mm:ss.zzz"));
-//            }
-//        }
-        if(!i)
+        FormatVideoInfo(m_ffmpeg_info.split(QRegExp("(\\r\\n)"),
+                                            QString::SkipEmptyParts),item,list[i]);
+
+        m_ffmpeg_info = "";
+//        if(!i)
+        if(item.audio_info.isEmpty() && item.video_info.isEmpty())
+        {
+             invaild.append(QString::number(i));
+             continue;
+        }
+
         m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(item.file_time,item.filename));
 
-        readlist.clear();
+ //       readlist.clear();
         QListWidgetItem *lwt2 = new QListWidgetItem("",lwt_ConverFiles);
         lwt2->setSizeHint(QSize(500,100));
+
         m_listitemstruct.append(item);
         ItemView  *iv= new ItemView(item,m_ToolBoxSettings);
+
         connect(iv,SIGNAL(parentDeleteMe(QWidget*)),SLOT(slot_removeItem(QWidget*)));
         lwt_ConverFiles->setItemWidget(lwt2,iv);
 
     }
     lwt_ConverFiles->setCurrentRow(0);
+
+    for(int i = 0 ; i < invaild.size();i++)
+        list.removeAt(invaild[i].toInt());
+
+}
+
+
+
+void MainWindow::slot_removeAllItem(QAction*)
+{
+    while(lwt_ConverFiles->count()>0) // delete all items;
+    {
+        QListWidgetItem *tmp =  lwt_ConverFiles->item(lwt_ConverFiles->count()-1);
+        if(tmp)
+        slot_removeItem(lwt_ConverFiles->itemWidget(tmp));
+
+    }
 }
 void MainWindow::slot_removeItem(QWidget *p)
 {
@@ -361,17 +445,6 @@ void MainWindow::slot_removeItem(QWidget *p)
             m_listItems.removeAt(i);
             m_listitemstruct.removeAt(i);
             m_PreViewPlay->slot_Stop_Clicked();
-            //            QMouseEvent qm2(QEvent::MouseButtonPress, m_PreViewPlay->btn_stop->pos(), Qt::LeftButton , Qt::LeftButton,    Qt::NoModifier);
-            //            QApplication::sendEvent(m_PreViewPlay->btn_stop,
-            //                                    new QMouseEvent(QEvent::MouseButtonPress,
-            //                                                    m_PreViewPlay->btn_stop->pos(),
-            //                                                    Qt::LeftButton ,
-            //                                                    Qt::LeftButton,Qt::NoModifier));
-            //            QApplication::sendEvent(m_PreViewPlay->btn_stop,
-            //                                    new QMouseEvent(QEvent::MouseButtonRelease,
-            //                                                    m_PreViewPlay->btn_stop->pos(),
-            //                                                    Qt::LeftButton ,
-            //                                                    Qt::LeftButton,Qt::NoModifier));
             break;
         }
     }
@@ -389,6 +462,8 @@ void MainWindow::SwitchMainListToGuide()
     lwt_ConverFiles->hide();
     layout_main->addWidget(m_guide,1,0,2,2);
     m_guide->setVisible(true);
+    m_ToolBoxSettings->clearAllInput();
+    m_ToolBoxSettings->setEnabled(false);
 }
 
 
@@ -409,7 +484,7 @@ void MainWindow::slot_DClickToPrePlay(QModelIndex mindex)
 void MainWindow::slot_DClickToPrePlay(QListWidgetItem *p)
 {
 //    ItemView  *iv= (ItemView*)lwt_ConverFiles->itemWidget(p);
-    m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[lwt_ConverFiles->row(p)]);
+   m_PreViewPlay->PrePlayFile(m_mplayer,m_listItems[lwt_ConverFiles->row(p)]);
 
 }
 
@@ -426,6 +501,7 @@ void MainWindow::slot_ConvertAll()
     for(int i = 0 ; i < lwt_ConverFiles->count();i++)
     {
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
+//        if(iw->isSelectFile())
         iw->slot_ConvertToStandby();
     }
 
@@ -435,7 +511,8 @@ void MainWindow::slot_ConvertAll()
         itemstruct t = m_listitemstruct.at(i);
         m_ToolBoxSettings->setTimeAndNameToTable(qMakePair(t.file_time,t.filename));
         ItemView *iw =(ItemView *)lwt_ConverFiles->itemWidget(lwt_ConverFiles->item(i));
-        iw->slot_MouseOnConvert();
+//        if(iw->isSelectFile())
+        iw->slot_MouseOnConvertFFMPEG();
         while(!iw->isFinished())
             QApplication::processEvents();
     }

@@ -60,7 +60,7 @@ private:
     QComboBox* cbox_vencoder;
     QComboBox* cbox_hwrate;
     QComboBox* cbox_vbitrate;
-    QComboBox* cbox_enoderCount;
+    QComboBox* cbox_encoderCount;
     QComboBox* cbox_frameRate;
     QComboBox* cbbox_aencoder;
     QComboBox* cbbox_abitrate;

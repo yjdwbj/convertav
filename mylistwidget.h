@@ -7,6 +7,7 @@
 #include <QMimeData>
 #include <QDragMoveEvent>
 #include <QWheelEvent>
+#include <QAction>
 
 class MyListWidget : public QListWidget
 {
@@ -19,11 +20,14 @@ protected:
     void dragMoveEvent(QDragMoveEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
     void dropEvent(QDropEvent *event);
+//    void mousePressEvent(QMouseEvent *event);
+    void contextMenuEvent(QContextMenuEvent *);
 
     QListWidgetItem *dropHintItem;
     QList<QUrl> m_urls;
 signals:
     void hasUrls(QList<QUrl>);
+    void deleteAllItems(QAction*);
 
 };
 

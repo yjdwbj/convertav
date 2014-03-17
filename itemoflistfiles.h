@@ -34,6 +34,7 @@ public:
     QString m_mplayer;
     QString m_mencoder;
     QProcess *m_Process;
+//    bool isSelectFile()const {return cbox_selelct->isChecked();}
     State getState()const {return _state;}
     bool isFinished() {return _state == Stopped;}
 
@@ -41,7 +42,7 @@ public slots:
     void slot_destoryMySelf();
     void slot_stopConvert();
     void slot_ConvertToStandby();
-    void slot_MouseOnConvert();
+//    void slot_MouseOnConvert();
     void slot_MouseOnConvertFFMPEG();  // 改用ffmpeg.exe 转换.
     void slot_CancelReNameFile();
 
@@ -63,14 +64,17 @@ private:
 //    QLabel *lab_audio;
 //    QLabel *lab_videoinfo;
     QLabel *lab_view;
+    Qt::CheckState _checked;
 //    QLabel *lab_time;
-    QCheckBox *cbox_selelct;
+  //  QCheckBox *cbox_selelct;
 
     QString fullpath;
 
     itemstruct m_item;
     const ToolBoxSettings *m_ToolBoxSettings;
+    QString m_AllConvertOutput;
 
+    int m_fileLengthForSeconds;
 
 
     QPushButton* btn_rename;
